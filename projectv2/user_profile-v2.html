@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+
+  <!-- Import Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway:100,300,400,500,700,900" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+  <!-- Custom Styles -->
+
+  <link rel="stylesheet" type="text/css" href="assets/css/bootstrap.min.css">
+
+  <link rel="stylesheet" href="./assets/css/user_dash-v2.css">
+
+
+</head>
+<body>
+
+    <section id="menu">
+        <div class="logo">
+            <h1><a href="">deNco</a></h1>
+        </div>
+
+        <span></span>
+        
+
+        <ul class="items">
+            <li>
+                <a href="user_dash.html">
+                    <i class="fa-solid fa-tasks"></i>
+                    Action Hub
+                    
+                </a>
+            </li>
+            <li>
+                <a href="user_profile.html">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                     Profile
+                </a>
+            </li>
+            <li>
+                <a href="#">
+                    <i class="fa-solid fa-chart-line"></i>
+                    Count Insights
+                </a>
+            </li>
+            <li>
+                <a href="#">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    Logout
+                </a>
+            </li>
+        </ul>
+    </section>
+
+    <section id="interface">
+        <div class="navigation">
+            <div class="n1">
+                <div class="search">
+                    <input type="text" placeholder="Search">
+                    <i class="fa-solid fa-search"></i>
+                </div>
+            </div>
+            
+            <div class="profile">
+                <i class="fa-solid fa-circle-user"></i>
+                <h2>email</h2>
+            </div>
+        </div>
+
+        <h3 class="i-name"><span>Edit</span> Profile</h3>
+    
+            <div class="container">
+                <div class="profile-section">
+                    <i class="fa-solid fa-circle-user"></i>
+                    <h4>Brown, Asher</h4>
+                    <p class="text-muted">New York, USA</p>
+                </div>
+            
+                <form>
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" class="form-control" >
+                    </div>
+
+                    <div class="form-group">
+                        <div class="icons">
+                            <i class="fa-regular fa-eye" id="togglePassword"></i>
+                        </div>
+                        <label for="password">Password</label>
+
+                        <input type="text" id="password" class="form-control" placeholder="Password">
+
+                       
+                           
+                    </div>
+
+                    
+                  
+                </form>
+            </div>
+
+
+
+            
+    </section>
+</div>
+    <script>
+   const btn = document.querySelector("#togglePassword");
+    const passwordEl = document.querySelector("#password");
+
+    btn.addEventListener("click", () => {
+        if (passwordEl.type === "password") {
+            passwordEl.type = "text";
+            btn.classList.remove("fa-eye");
+            btn.classList.add("fa-eye-slash");
+        } else {
+            passwordEl.type = "password";
+            btn.classList.remove("fa-eye-slash");
+            btn.classList.add("fa-eye");
+        }
+    });
+    </script>
+</body>
+
+
+
+</html>
