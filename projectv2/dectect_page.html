@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>deNco Detection</title>
+    <link rel="stylesheet" href="./assets/css/detect_page.css">
+
+</head>
+<body>
+    <div class="container glass">
+        <div class="container-fluid scanning-page">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center">
+                    <div class="scanner-container">
+                        <h1 class="scanning-title">Scanning.....</h1>
+        
+                        {% if is_static %}
+                        <!-- Placeholder for the people image -->
+                        <div class="image-container">
+                            {% if image_path %}
+                                <img src="{{ image_path }}" style="width: 100%; height: auto;" alt="Uploaded Image">
+                            {% elif video_path %}
+                                <video controls autoplay>
+                                    <source src="{{ video_path }}" type="video/mp4">
+                                    Your browser does not support the video tag.
+                                </video>
+                            {% endif %}
+                        </div>
+                        <p id="live-count" class="detected-count">People Count: {{ people_count }}</p>
+                        {% else %}
+                        <!-- Live streaming integration -->
+                        <div class="container">
+                            <div class="row">
+                                <div class="col-lg-8  offset-lg-2">
+                                    <img src="{{ url_for('video_feed') }}" width="100%">
+                                </div>
+                            </div>
+                        </div>
+                        <p id="live-count" class="detected-count">People Count: {{ people_count }}</p>
+                        {% endif %}
+                        <div class="btn-container">
+                            <a href="{{ url_for('choice') }}" class="btn btn-danger custom-btn" id="stop-btn">Return to selection</a>
+                            <button type="button" class="btn btn-danger custom-btn" id="stop-btn">Refresh detection</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+</body>
+</html>
