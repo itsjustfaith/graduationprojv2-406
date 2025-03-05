@@ -24,57 +24,33 @@
         <div class="logo">
             <h1><a href="">deNco</a></h1>
         </div>
+        <i class="fa-solid fa-bars menu-toggle"></i>
+        <i class="fa-solid fa-times menu-close" style="display: none;"></i>
 
-        <span></span>
         
 
+
+
         <ul class="items">
-            <li>
-                <a href="user_dash.html">
-                    <i class="fa-solid fa-tasks"></i>
-                    Action Hub
-                </a>
-            </li>
-            <li>
-                <a href="user_profile.html">
-                    <i class="fa-solid fa-pen-to-square"></i>
-                     Profile
-                    
-                </a>
-            </li>
-            <li>
-                <a href="#">
-                    <i class="fa-solid fa-chart-line"></i>
-                    Count Insights
-                </a>
-            </li>
-            <li>
-                <a href="#">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    Logout
-                </a>
-            </li>
+            <li><a href="user_dash.html"><i class="fa-solid fa-tasks"></i> Action Hub</a></li>
+            <li><a href="user_profile.html"><i class="fa-solid fa-pen-to-square"></i> Profile</a></li>
+            <li><a href="#"><i class="fa-solid fa-chart-line"></i> Count Insights</a></li>
+            <li><a href="#"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
         </ul>
     </section>
 
+    <!-- Main Content -->
     <section id="interface">
         <div class="navigation">
-            <div class="n1">
-                <div class="search">
-                    <input type="text" placeholder="Search">
-                    <i class="fa-solid fa-search"></i>
-                </div>
-            </div>
-            
+           
             <div class="profile">
                 <i class="fa-solid fa-circle-user"></i>
-                <h2>email</h2>
+                <h2>Welcome , username</h2>
             </div>
         </div>
-
         
         <div class="table-container">
-            <div class="count-table">
+            <main class="count-table">
                 <section class="table-header"></section>
                 <section class="table-body">
                     <table>
@@ -85,6 +61,7 @@
                                 <th>Action Date</th>
                                 <th>Used Resources</th>
                                 <th>Total Count</th>
+                               
                             </tr>
                         </thead>
         
@@ -128,6 +105,66 @@
                                 </td>
                                 <td> 50</td>
                             </tr>
+
+                            <tr>
+                                <td>1344</td>
+                                <td>18:20 pm</td>
+                                <td> 18 Feb , 2025 </td>
+                                <td>
+                                    <p><strong>Realtime Feed</strong></p>
+                                </td>
+                                <td> 50</td>
+                            </tr>
+
+                            <tr>
+                                <td>1344</td>
+                                <td>18:20 pm</td>
+                                <td> 18 Feb , 2025 </td>
+                                <td>
+                                    <p><strong>Realtime Feed</strong></p>
+                                </td>
+                                <td> 50</td>
+                            </tr>
+
+                            <tr>
+                                <td>1344</td>
+                                <td>18:20 pm</td>
+                                <td> 18 Feb , 2025 </td>
+                                <td>
+                                    <p><strong>Realtime Feed</strong></p>
+                                </td>
+                                <td> 50</td>
+                            </tr>
+
+                            <tr>
+                                <td>1344</td>
+                                <td>18:20 pm</td>
+                                <td> 18 Feb , 2025 </td>
+                                <td>
+                                    <p><strong>Realtime Feed</strong></p>
+                                </td>
+                                <td> 50</td>
+                            </tr>
+
+                            <tr>
+                                <td>1344</td>
+                                <td>18:20 pm</td>
+                                <td> 18 Feb , 2025 </td>
+                                <td>
+                                    <p><strong>Realtime Feed</strong></p>
+                                </td>
+                                <td> 50</td>
+                            </tr>
+
+                            <tr>
+                                <td>1344</td>
+                                <td>18:20 pm</td>
+                                <td> 18 Feb , 2025 </td>
+                                <td>
+                                    <p><strong>Realtime Feed</strong></p>
+                                </td>
+                                <td> 50</td>
+                            </tr>
         
         
         
@@ -143,5 +180,24 @@
         
     </section>
     
+
+    <script>
+        const menuToggle = document.querySelector('.menu-toggle');
+        const menuClose = document.querySelector('.menu-close');
+        const menuItems = document.querySelector('.items');
+
+        menuToggle.addEventListener('click', function () {
+            menuItems.classList.toggle('active');
+            menuToggle.style.display = 'none';
+            menuClose.style.display = 'block';
+        });
+
+        menuClose.addEventListener('click', function () {
+            menuItems.classList.toggle('active');
+            menuToggle.style.display = 'block';
+            menuClose.style.display = 'none';
+        });
+    </script>
+
 </body>
 </html>

@@ -25,51 +25,28 @@
         <div class="logo">
             <h1><a href="">deNco</a></h1>
         </div>
+        <i class="fa-solid fa-bars menu-toggle"></i>
+        <i class="fa-solid fa-times menu-close" style="display: none;"></i>
 
-        <span></span>
         
 
+
+
         <ul class="items">
-            <li>
-                <a href="user_dash.html">
-                    <i class="fa-solid fa-tasks"></i>
-                    Action Hub
-                    
-                </a>
-            </li>
-            <li>
-                <a href="user_profile.html">
-                    <i class="fa-solid fa-pen-to-square"></i>
-                     Profile
-                </a>
-            </li>
-            <li>
-                <a href="#">
-                    <i class="fa-solid fa-chart-line"></i>
-                    Count Insights
-                </a>
-            </li>
-            <li>
-                <a href="#">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    Logout
-                </a>
-            </li>
+            <li><a href="user_dash.html"><i class="fa-solid fa-tasks"></i> Action Hub</a></li>
+            <li><a href="user_profile.html"><i class="fa-solid fa-pen-to-square"></i> Profile</a></li>
+            <li><a href="#"><i class="fa-solid fa-chart-line"></i> Count Insights</a></li>
+            <li><a href="#"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
         </ul>
     </section>
 
+    <!-- Main Content -->
     <section id="interface">
         <div class="navigation">
-            <div class="n1">
-                <div class="search">
-                    <input type="text" placeholder="Search">
-                    <i class="fa-solid fa-search"></i>
-                </div>
-            </div>
-            
+           
             <div class="profile">
                 <i class="fa-solid fa-circle-user"></i>
-                <h2>email</h2>
+                <h2>Welcome , username</h2>
             </div>
         </div>
 
@@ -79,33 +56,41 @@
                 <div class="profile-section">
                     <i class="fa-solid fa-circle-user"></i>
                     <h4>Brown, Asher</h4>
-                    <p class="text-muted">New York, USA</p>
                 </div>
             
                 <form>
                     <div class="form-group">
                         <label for="username">Username</label>
-                        <input type="text" id="username" class="form-control">
+                        <input type="text" id="username" class="form-control" placeholder="Username *">
                     </div>
                     <div class="form-group">
                         <label for="email">Email</label>
-                        <input type="email" id="email" class="form-control" >
+                        <input type="email" id="email" class="form-control" placeholder="Email *">
                     </div>
-
+                    
                     <div class="form-group">
                         <div class="icons">
                             <i class="fa-regular fa-eye" id="togglePassword"></i>
                         </div>
+                        
                         <label for="password">Password</label>
+                        
 
-                        <input type="text" id="password" class="form-control" placeholder="Password">
-
-                       
-                           
+                        <input type="text" id="password" class="form-control" placeholder="Password *">
                     </div>
-
                     
-                  
+                   
+                    <div class="form-group" id="newPasswordGroup" style="display: none;">
+                        <label for="newPassword">New Password</label>
+                        <input type="password" id="newPassword" class="form-control" placeholder="New Password *">
+                    </div>
+                    <div class="form-group" id="confirmPasswordGroup" style="display: none;">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm Password *">
+                    </div>
+                    <button type="button" id="editProfileBtn" class="btn btn-secondary">Edit Profile</button>
+                    <button type="button" id="saveChangesBtn" class="btn btn-primary" style="display: none;">Save Changes</button>
+                    <button type="button" id="cancelBtn" class="btn btn-danger" style="display: none;">Cancel</button>
                 </form>
             </div>
 
@@ -114,8 +99,25 @@
             
     </section>
 </div>
-    <script>
-   const btn = document.querySelector("#togglePassword");
+<script>
+
+        const menuToggle = document.querySelector('.menu-toggle');
+        const menuClose = document.querySelector('.menu-close');
+        const menuItems = document.querySelector('.items');
+
+        menuToggle.addEventListener('click', function () {
+            menuItems.classList.toggle('active');
+            menuToggle.style.display = 'none';
+            menuClose.style.display = 'block';
+        });
+
+        menuClose.addEventListener('click', function () {
+            menuItems.classList.toggle('active');
+            menuToggle.style.display = 'block';
+            menuClose.style.display = 'none';
+        });
+
+     const btn = document.querySelector("#togglePassword");
     const passwordEl = document.querySelector("#password");
 
     btn.addEventListener("click", () => {
@@ -129,7 +131,70 @@
             btn.classList.add("fa-eye");
         }
     });
-    </script>
+
+    const editProfileBtn = document.querySelector("#editProfileBtn");
+    const saveChangesBtn = document.querySelector("#saveChangesBtn");
+    const cancelBtn = document.querySelector("#cancelBtn");
+    const formFields = document.querySelectorAll("#username, #email,#password, #oldPassword, #newPassword, #confirmPassword");
+
+    let initialFormValues = {};
+
+
+
+    editProfileBtn.addEventListener("click", () => {
+        formFields.forEach(field => {
+            field.disabled = false;
+            initialFormValues[field.id] = field.value;
+        });
+        document.querySelector("#newPasswordGroup").style.display = "block";
+        document.querySelector("#confirmPasswordGroup").style.display = "block";
+        editProfileBtn.style.display = "none";
+        saveChangesBtn.style.display = "inline-block";
+        cancelBtn.style.display = "inline-block";
+    });
+
+    saveChangesBtn.addEventListener("click", () => {
+        const username = document.querySelector("#username").value;
+        const email = document.querySelector("#email").value;
+        const password = document.querySelector("#password").value;
+        const newPassword = document.querySelector("#newPassword").value;
+        const confirmPassword = document.querySelector("#confirmPassword").value;
+
+        // Perform the save changes logic here
+        // For example, you can send the data to the server using fetch or XMLHttpRequest
+
+        console.log("Profile updated with:", { username, email, oldPassword, newPassword, confirmPassword });
+        alert("Profile updated successfully!");
+
+        formFields.forEach(field => field.disabled = true);
+        document.querySelector("#newPasswordGroup").style.display = "none";
+        document.querySelector("#confirmPasswordGroup").style.display = "none";
+        editProfileBtn.style.display = "inline-block";
+        saveChangesBtn.style.display = "none";
+        cancelBtn.style.display = "none";
+    });
+
+    cancelBtn.addEventListener("click", () => {
+        formFields.forEach(field => {
+            field.value = initialFormValues[field.id];
+            field.disabled = true;
+        });
+        document.querySelector("#newPasswordGroup").style.display = "none";
+        document.querySelector("#confirmPasswordGroup").style.display = "none";
+        editProfileBtn.style.display = "inline-block";
+        saveChangesBtn.style.display = "none";
+        cancelBtn.style.display = "none";
+    });
+
+    // Initially disable form fields
+    formFields.forEach(field => field.disabled = true);
+
+     togglePassword.addEventListener("click", () => {
+        const type = passwordField.getAttribute("type") === "password" ? "text" : "password";
+        passwordField.setAttribute("type", type);
+        togglePassword.classList.toggle("fa-eye-slash");
+    });
+</script>
 </body>
 
 

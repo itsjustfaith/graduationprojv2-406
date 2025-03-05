@@ -80,7 +80,7 @@ body {
 
 
 #menu .items li i{
-    color: rgb(255, 255, 255);
+    color: rgb(117, 117, 222);
     width:30px;
     height:20px;
     line-height: 30px;
@@ -92,7 +92,7 @@ body {
 
 #menu .items li:hover i, #menu .items li:hover a {
     
-    color: #e292ff;
+    color: #f3f4f6;
 }
 
 
@@ -148,7 +148,6 @@ body {
 }
 
 #interface .navigation .profile{
- 
     display: flex;
     align-items: center;
     justify-content: center;
@@ -157,7 +156,7 @@ body {
 
 
 #interface .navigation .profile i{
-    font-size: 35px;
+    font-size: 30px;
     margin-right: 20px;
     margin-left:20px;
     color: #0c1e3b;
@@ -167,9 +166,9 @@ body {
 
 #interface .navigation .profile h2{
     display: inline-block;
-    font-size: 15px;
-    color: #030508;
-    font-weight: 200px;
+    font-size: 20px;
+    color: #0c1e3b;
+    font-weight: 400px;
 }
 
 
@@ -188,80 +187,6 @@ span{
     height:50vh;
     border-bottom:2px solid #0c1e3b;
 }
-
-@media (max-width: 1024px) {
-  /* Hide sidebar and make it a topbar */
-  #menu {
-      width: 100%;
-      height: 60px;
-      position: fixed;
-      top: 0;
-      left: 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 20px;
-      background: #0c1e3b;
-      z-index: 1000;
-  }
-
-  #menu .logo {
-      display: flex;
-      align-items: center;
-      padding: 0;
-      border-bottom: none;
-      height: 60px;
-  }
-
-  #menu .items {
-      display: none; /* Hide menu items by default */
-      flex-direction: column;
-      background: #0c1e3b;
-      position: absolute;
-      top: 10px;
-      left: 0;
-      width: 100%;
-  }
-
-  #menu .items.active {
-      display: flex; /* Show menu when active */
-  }
-
-  #menu .items li {
-      padding: 15px;
-      text-align: center;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  }
-
-  /* Hamburger menu */
-  .menu-toggle {
-      display: block;
-      font-size: 24px;
-      color: #ffff;
-      cursor: pointer;
-  }
-
-  .menu-close {
-    display: block;
-    font-size: 24px;
-    color: #fff;
-    cursor: pointer;
-}
-
-/* Adjust main content */
-#interface {
-    margin-left: 0; /* Remove left margin */
-    margin-top: 60px; /* Push content down */
-}
-}
-
-@media (min-width: 1025px) {
-.menu-toggle, .menu-close {
-    display: none;
-}
-}
-
-
 
 /* 
 ---------------------------------------------
@@ -719,23 +644,6 @@ features
 
 
 /* USER_COUNT PAGE*/
-
-
-
-main.table{
-  box-sizing: border-box;
-  width: 82vw;
-  height:90vh;
-  background-color: #fff5;
-
-  
-  border-radius: 2px;
-
-  backdrop-filter:blur(7px);
-  box-shadow: 0 .4rem .8rem #0005;
-  overflow: hidden  ;
-}
-
 .table-container{
     padding:10px;
     border-radius: 25px;
@@ -762,44 +670,62 @@ count-table{
 
 }
 
+table, th, td{
+    border-collapse: collapse;
+    padding: 1rem 2rem;
+    background-color: rgba(255, 255, 255, 0.182);
+
+    border-radius: 2px;
+
+    backdrop-filter:blur(7px);
+    box-shadow: 0 .4rem .8rem #0005;
+
+    overflow: hidden;
+}
 
 .table-header{
     width: 100%;
     height:10%;
     background-color: #fff4;
-    padding: .8rem 1rem;
+    padding: 3rem 1rem;
 
 }
 
 
-.table-body{
+table-body{
     width: 95%;
-    max-height:  calc(89% - 1.6rem);
+    max-height:  calc(89% - .8rem);
     background-color: #fffb;
 
     
-    margin: .8rem auto;
+    margin: .2rem auto;
 
-    border-radius: .6rem;
-    overflow:auto;
+
+    overflow:hidden;
 
 
 }
 
-.table-body::-webkit-scrollbar {
-  width: 0.5rem;
-  height: 0.5rem;
+
+
+.table-body::webkit-scrollbar{
+    width: 0.5rem;
+    height: 0.5rem;
+    
+
 }
 
-.table-body::-webkit-scrollbar-thumb {
-  border-radius: 0.5rem;
-  background-color: #0004;
-  visibility: hidden;
+
+.table-body::webkit-scrollbar-thumb{
+    border-radius:.5rem;
+    background-color: #0004;
+    visibility: hidden;
+
+
 }
 
 
-
-.table-body:hover::-webkit-scrollbar-thumb{
+.table-body:hover ::webkit-scrollbar-thumb{
     visibility: visible;
 
 }
@@ -807,11 +733,6 @@ count-table{
 
 table{
     width: 100%;
-}
-
-table,th,td{
-  border-collapse: collapse;
-  padding: 1rem;
 }
 
 
@@ -834,18 +755,158 @@ tbody tr:hover{
 
 
 tr{
-  white-space: nowrap;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
+    white-space: nowrap;
+    align-items: center;
+    justify-content: center;
 }
 
-@media (max-width: 1025px){
-   td:not(:first-of-type)
-   {
-    min-width: 12.1rem;
-   }
-    table {
-    width: max-content; /* Prevents table shrink */
-  }
+
+table, th, td{
+  border-collapse: collapse;
+  padding: 1rem 2rem;
+  background-color: rgba(255, 255, 255, 0.182);
+
+  border-radius: 2px;
+
+  backdrop-filter:blur(7px);
+  box-shadow: 0 .4rem .8rem #0005;
+
+  text-align: left;
+  overflow: hidden;
 }
+
+
+
+ <main class="table">
+                <section class="table-header"></section>
+                <section class="table-body">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User ID</th>
+                                <th>Time</th>
+                                <th>Action Date</th>
+                                <th>Used Resources</th>
+                                <th>Total Count</th>
+                                <th>Total Count</th>
+                                <th>Total Count</th>
+
+                            </tr>
+                        </thead>
+        
+                        <tbody>
+                            <tr>
+                                <td>1234</td>
+                                <td>07:26 am</td>
+                                <td> 17 Feb , 2025 </td>
+                                <td>
+                                    <p><strong>Realtime Feed</strong></p>
+                                </td>
+                                <td> 750</td>
+                            </tr>
+        
+                            <tr>
+                                <td>1344</td>
+                                <td>18:20 pm</td>
+                                <td> 18 Feb , 2025 </td>
+                                <td>
+                                    <p><strong>Realtime Feed</strong></p>
+                                </td>
+                                <td> 50</td>
+                            </tr>
+        
+                            <tr>
+                                <td>1344</td>
+                                <td>18:20 pm</td>
+                                <td> 18 Feb , 2025 </td>
+                                <td>
+                                    <p><strong>Realtime Feed</strong></p>
+                                </td>
+                                <td> 50</td>
+                            </tr>
+        
+                            <tr>
+                                <td>1344</td>
+                                <td>18:20 pm</td>
+                                <td> 18 Feb , 2025 </td>
+                                <td>
+                                    <p><strong>Realtime Feed</strong></p>
+                                </td>
+                                <td> 50</td>
+                            </tr>
+
+                            <tr>
+                                <td>1344</td>
+                                <td>18:20 pm</td>
+                                <td> 18 Feb , 2025 </td>
+                                <td>
+                                    <p><strong>Realtime Feed</strong></p>
+                                </td>
+                                <td> 50</td>
+                            </tr>
+
+                            <tr>
+                                <td>1344</td>
+                                <td>18:20 pm</td>
+                                <td> 18 Feb , 2025 </td>
+                                <td>
+                                    <p><strong>Realtime Feed</strong></p>
+                                </td>
+                                <td> 50</td>
+                            </tr>
+
+                            <tr>
+                                <td>1344</td>
+                                <td>18:20 pm</td>
+                                <td> 18 Feb , 2025 </td>
+                                <td>
+                                    <p><strong>Realtime Feed</strong></p>
+                                </td>
+                                <td> 50</td>
+                            </tr>
+
+                            <tr>
+                                <td>1344</td>
+                                <td>18:20 pm</td>
+                                <td> 18 Feb , 2025 </td>
+                                <td>
+                                    <p><strong>Realtime Feed</strong></p>
+                                </td>
+                                <td> 50</td>
+                            </tr>
+
+                            <tr>
+                                <td>1344</td>
+                                <td>18:20 pm</td>
+                                <td> 18 Feb , 2025 </td>
+                                <td>
+                                    <p><strong>Realtime Feed</strong></p>
+                                </td>
+                                <td> 50</td>
+                            </tr>
+
+                            <tr>
+                                <td>1344</td>
+                                <td>18:20 pm</td>
+                                <td> 18 Feb , 2025 </td>
+                                <td>
+                                    <p><strong>Realtime Feed</strong></p>
+                                </td>
+                                <td> 50</td>
+                            </tr>
+        
+        
+        
+                            
+        
+                            
+                        </tbody>
+                    </table>
+                </section>
+            </main>
+
+        
+    </section>
+    
+</body>
+</html>
