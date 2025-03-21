@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>deNco Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/detect_page.css') }}">
+</head>
+<body>
+    <div class="container glass">
+        <div class="content-wrapper">
+            <h1 class="scanning-title">Scanning.....</h1>
+
+            <div class="display-container">
+
+                
+                {% if is_static %}
+                    <!-- Placeholder for image or video -->
+                    <div class="media-display">
+                        {% if image_path %}
+                            <img src="{{ image_path }}" alt="Uploaded Image">
+                        {% elif video_path %}
+                            <video controls autoplay>
+                                <source src="{{ video_path }}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        {% endif %}
+                    </div>
+                {% else %}
+                <!-- Live streaming integration -->
+                <div class="media-display">
+                    <div id="loader">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+                    <img src="{{ url_for('video_feed') }}" alt="Live Webcam Feed">
+                </div>
+                {% endif %}
+
+                <!-- Loader (Initially Visible) -->
+                <div id="screen-loader">
+                    <img src="{{ url_for('static', filename='images/Spinner.gif') }}" alt="LOADING...">
+                </div>
+
+                <!-- People Count -->
+                <p id="live-count" class="detected-count">People Count: {{ people_count }}</p>
+            </div>
+
+            <!-- Buttons Container -->
+            <div class="btn-container">
+                <a href="{{ url_for('user_dash') }}" class="btn btn-danger action-btn" id="stop-btn">Return to Selection</a>
+                <button type="button" class="btn btn-danger action-btn" id="stop-btn">Refresh Detection</button>
+            </div>
+        </div>
+    </div>    
+
+    <!-- Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script>
+        // Show the loader, then transition to detection display
+        window.onload = function () {
+            setTimeout(function() {
+                document.getElementById('screen-loader').style.display = 'none';
+            }, 2000);
+        };
+
+        // Socket.io script for updating people count
+        const socket = io();
+
+        socket.on('people_count', function(data) {
+            document.getElementById('live-count').innerText = `People Count: ${data.count}`;
+        });
+
+        document.getElementById('stop-btn').addEventListener('click', function() {
+            fetch('/stop_feed', { method: 'POST' });
+        });
+
+        socket.on('feed_stopped', function() {
+            window.location.href = '/detect';
+        });
+    </script>
+</body>
+</html>

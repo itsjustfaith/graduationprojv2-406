@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+
+  <!-- Import Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway:100,300,400,500,700,900" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+  <!-- Custom Styles -->
+
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/user_dash.css') }}">
+
+    
+</head>
+
+<body>
+
+    <section id="menu">
+        <div class="logo">
+            <h1><a href="">deNco</a></h1>
+        </div>
+        <i class="fa-solid fa-bars menu-toggle"></i>
+        <i class="fa-solid fa-times menu-close" style="display: none;"></i>
+
+        
+
+
+
+        <ul class="items">
+            <li><a href="{{ url_for('user_dash') }}"><i class="fa-solid fa-tasks"></i> Action Hub</a></li>
+            <li><a href="{{ url_for('user_profile') }}"><i class="fa-solid fa-pen-to-square"></i> Profile</a></li>
+            <li><a href="{{ url_for('user_count') }}"><i class="fa-solid fa-chart-line"></i> Count Insights</a></li>
+            <li><a href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+        </ul>
+    </section>
+
+    <!-- Main Content -->
+    <section id="interface">
+        <div class="navigation">
+           
+            <div class="profile">
+                <i class="fa-solid fa-circle-user"></i>
+                <h2>Welcome , {{ current_user.username }}</h2>
+            </div>
+        </div>
+
+        <h3 class="i-name"><span>Edit</span> Profile</h3>
+    
+            <div class="container">
+                <div class="profile-section">
+                    <i class="fa-solid fa-circle-user"></i>
+                    <h4>{{ current_user.username }}</h4>
+                </div>
+            
+                <form method="POST" action="{{ url_for('user_profile') }}">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" class="form-control" value="{{ current_user.username }}" placeholder="Username *" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" class="form-control" value="{{ current_user.email }}" placeholder="Email *" disabled>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="icons">
+                            <i class="fa-regular fa-eye" id="togglePassword"></i>
+                        </div>
+                        
+                        <label for="current_password">Current Password</label>
+                        <input type="password" id="current_password" name="current_password" class="form-control" placeholder="Current Password *" disabled>
+                    </div>
+                    
+                    <div class="form-group" id="newPasswordGroup" style="display: none;">
+                        <label for="new_password">New Password</label>
+                        <input type="password" id="new_password" name="new_password" class="form-control" placeholder="New Password *" disabled>
+                    </div>
+                    <div class="form-group" id="confirmPasswordGroup" style="display: none;">
+                        <label for="confirm_password">Confirm Password</label>
+                        <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Confirm Password *" disabled>
+                    </div>
+                    <button type="button" id="editProfileBtn" class="btn btn-secondary">Edit Profile</button>
+                    <button type="submit" id="saveChangesBtn" class="btn btn-primary" style="display: none;">Save Changes</button>
+                    <button type="button" id="cancelBtn" class="btn btn-danger" style="display: none;">Cancel</button>
+                </form>
+            </div>
+
+
+
+            
+    </section>
+</div>
+<script>
+
+        const menuToggle = document.querySelector('.menu-toggle');
+        const menuClose = document.querySelector('.menu-close');
+        const menuItems = document.querySelector('.items');
+
+        menuToggle.addEventListener('click', function () {
+            menuItems.classList.toggle('active');
+            menuToggle.style.display = 'none';
+            menuClose.style.display = 'block';
+        });
+
+        menuClose.addEventListener('click', function () {
+            menuItems.classList.toggle('active');
+            menuToggle.style.display = 'block';
+            menuClose.style.display = 'none';
+        });
+
+     const btn = document.querySelector("#togglePassword");
+    const passwordEl = document.querySelector("#password");
+
+    btn.addEventListener("click", () => {
+        if (passwordEl.type === "password") {
+            passwordEl.type = "text";
+            btn.classList.remove("fa-eye");
+            btn.classList.add("fa-eye-slash");
+        } else {
+            passwordEl.type = "password";
+            btn.classList.remove("fa-eye-slash");
+            btn.classList.add("fa-eye");
+        }
+    });
+
+    // Replace the existing JavaScript for form handling
+    const editProfileBtn = document.querySelector("#editProfileBtn");
+    const saveChangesBtn = document.querySelector("#saveChangesBtn");
+    const cancelBtn = document.querySelector("#cancelBtn");
+    const formFields = document.querySelectorAll("#username, #email, #current_password, #new_password, #confirm_password");
+
+    let initialFormValues = {};
+
+    editProfileBtn.addEventListener("click", () => {
+        formFields.forEach(field => {
+            field.disabled = false;
+            initialFormValues[field.id] = field.value;
+        });
+        document.querySelector("#newPasswordGroup").style.display = "block";
+        document.querySelector("#confirmPasswordGroup").style.display = "block";
+        editProfileBtn.style.display = "none";
+        saveChangesBtn.style.display = "inline-block";
+        cancelBtn.style.display = "inline-block";
+    });
+
+    // No longer need the saveChangesBtn event listener as we'll use form submission
+
+    cancelBtn.addEventListener("click", () => {
+        formFields.forEach(field => {
+            field.value = initialFormValues[field.id];
+            field.disabled = true;
+        });
+        document.querySelector("#newPasswordGroup").style.display = "none";
+        document.querySelector("#confirmPasswordGroup").style.display = "none";
+        editProfileBtn.style.display = "inline-block";
+        saveChangesBtn.style.display = "none";
+        cancelBtn.style.display = "none";
+    });
+
+    // Initially disable form fields
+    formFields.forEach(field => field.disabled = true);
+
+    // Fix the password toggle
+    const togglePassword = document.querySelector("#togglePassword");
+    const passwordField = document.querySelector("#current_password");
+
+    togglePassword.addEventListener("click", () => {
+        const type = passwordField.getAttribute("type") === "password" ? "text" : "password";
+        passwordField.setAttribute("type", type);
+        togglePassword.classList.toggle("fa-eye-slash");
+    });
+</script>
+</body>
+
+
+
+</html>
