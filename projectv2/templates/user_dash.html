@@ -60,16 +60,16 @@
         <h3 class="i-name"><span>Action</span> Hub</h3>
 
         <div class="container">
-            <button type="submit" class="btn btn-primary" style="border: none; background: transparent;" name="resource_type" value="live">
-                <div class="features-small-item">
-                    <form action="/detect" method="POST">
-                        <input type="hidden" name="resource_type" value="live">
-                                <div class="icon"><i class="fa fa-camera"></i></div>
-                                <h5 class="features-title">Use Realtime Feed</h5>
-                                <p>Lorem ipsum dolor sit amet...</p>
-                    </form> 
-                </div>
-            </button>
+            <form action="/detect" method="POST">
+                <input type="hidden" name="resource_type" value="live">
+                <button type="submit" class="btn btn-primary" style="border: none; background: transparent; width:100%;" name="resource_type" value="live">
+                    <div class="features-small-item">
+                         <div class="icon"><i class="fa fa-camera"></i></div>
+                         <h5 class="features-title">Use Realtime Feed</h5>
+                        <p>Lorem ipsum dolor sit amet...</p>
+                    </div>
+                </button>
+            </form>    
 
            
 
