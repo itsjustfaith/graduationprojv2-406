@@ -3,17 +3,21 @@
 /* Global Styles */
 body {
     background-image: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0.2, 0)), url(../images/hero-img.jpg);
-    background-size: cover; /* Ensures the image covers the entire viewport */
+    background-size: cover;
+    /* Ensures the image covers the entire viewport */
     background-position: center;
-    background-attachment: fixed; /* Prevents background scrolling */
-    background-repeat: no-repeat; /* Prevents repeating */
+    background-attachment: fixed;
+    /* Prevents background scrolling */
+    background-repeat: no-repeat;
+    /* Prevents repeating */
     font-family: "Raleway", sans-serif;
     margin: 0;
-    display: flex;
+    /*display: flex;*/
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    overflow: hidden; /* Prevents scrollbars */
+    overflow: hidden;
+    /* Prevents scrollbars */
 }
 
 /* Screen_Loader */
@@ -118,7 +122,8 @@ body {
 .media-display video {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Ensures full fit without stretching */
+    object-fit: cover;
+    /* Ensures full fit without stretching */
 }
 
 
@@ -196,4 +201,14 @@ body {
         width: 140px;
         font-size: 12px;
     }
+}
+
+.full-screen-glass {
+    width: 100vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
