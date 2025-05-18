@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>deNco User Dashboard</title>
+
+    <!-- Import Google Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Raleway:100,300,400,500,700,900" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+    <!-- Custom Styles -->
+
+    <link rel="stylesheet" type="text/css" href="static/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="./static/css/user_dash.css">
+
+    <style>
+      
+      .table-header{
+        font-size:30px;
+        text-align: center;;
+      }
+      .table-body{
+        width:100%
+      }
+
+      .btn{
+        margin-top:2px;  
+        font-size:15px;
+        
+       }
+        
+
+       .btn:hover{
+        padding-bottom:8px;
+        
+
+       }
+    </style>
+
+</head>
+<body>
+    <section id="menu">
+        <div class="logo">
+            <h1><a href="">deNco</a></h1>
+        </div>
+        <i class="fa-solid fa-bars menu-toggle"></i>
+        <i class="fa-solid fa-times menu-close" style="display: none;"></i>
+
+        
+
+
+
+        <ul class="items">
+            <li><a href="admin.html"><i class="fa-solid fa-users"></i> Users </a></li>
+            <li><a href="admin_detection.html"><i class="fa-solid fa-sliders"></i> System Detection Logs</a></li>
+            <li><a href="#"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+        </ul>
+    </section>
+
+    <!-- Main Content -->
+    <section id="interface">
+        <div class="navigation">
+           
+            <div class="profile">
+                <i class="fa-solid fa-circle-user"></i>
+                <h2>Welcome , username</h2>
+            </div>
+        </div>
+
+        <section class="table-header"> Create Users </section>
+        <div class="container mt-5"  style="margin-top: -50px;" >
+            <div class="main row justify-content-center" style="margin-top: -50px;">
+                <form action="" id="user-form" class="row justify-content-center mb-4" autocomplete="off">
+                    <div class="col-10 mb-3">
+                        <label for="Userid">User Id</label>
+                        <input class="form-control" id="Userid" type="text" placeholder="Enter User Id"> 
+                    </div>
+    
+                    <div class="col-10 mb-3">
+                        <label for="Email">Email</label>
+                        <input class="form-control" id="Email" type="text" placeholder="Enter the email"> 
+                    </div>
+                    <div class="col-10 mb-3">
+                        <label for="Password">Password</label>
+                        <input class="form-control" id="Password" type="text" placeholder="Enter the password"> 
+                    </div>
+                    <div class="col-10">
+                        <input class="btn btn-success add-btn" type="submit" value="Submit">
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <main class="count-table">
+                <section class="table-header"> Users </section>
+                <section class="table-body">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User ID</th>
+                                <th>Email</th>
+                                <th>Password</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+        
+                        <tbody id="user-list">
+                            <tr>
+                                <td>1234</td>
+                                <td>email</td>
+                                <td> password </td>
+                                <td>
+                                    <p><strong><a href="#" class="btn btn-warning btn-sm edit">Edit</a>
+                                        <a href="#" class="btn btn-danger btn-sm delete">Delete</a>
+                                    </strong></p>
+                                </td>
+                            </tr>
+                                    
+                        </tbody>
+                    </table>
+                </section>
+            </div>
+        </div>
+
+        
+    </section>
+    
+
+    <script>
+        const menuToggle = document.querySelector('.menu-toggle');
+        const menuClose = document.querySelector('.menu-close');
+        const menuItems = document.querySelector('.items');
+
+        menuToggle.addEventListener('click', function () {
+            menuItems.classList.toggle('active');
+            menuToggle.style.display = 'none';
+            menuClose.style.display = 'block';
+        });
+
+        menuClose.addEventListener('click', function () {
+            menuItems.classList.toggle('active');
+            menuToggle.style.display = 'block';
+            menuClose.style.display = 'none';
+        });
+
+        var selectedRow = null;
+
+    // Show Alerts 
+    function showAlert(message, className) {
+        const div = document.createElement("div");
+        div.className = `alert alert-${className}`;
+        div.appendChild(document.createTextNode(message));
+
+        // Find the navigation section to insert the alert just below the "Welcome, Admin"
+        const navigation = document.querySelector(".navigation");
+
+        // Insert the alert just below the navigation, before the main content
+        navigation.insertAdjacentElement("afterend", div);
+
+        // Remove the alert after 3 seconds
+        setTimeout(() => div.remove(), 3000);
+    }
+
+    // Clear All Fields 
+    function clearFields() {
+        document.querySelector("#Userid").value = "";
+        document.querySelector("#Email").value = "";
+        document.querySelector("#Password").value = "";
+    }
+
+    // Add Data 
+    document.querySelector("#user-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        // Get From Values 
+        const Userid = document.querySelector("#Userid").value;
+        const Email = document.querySelector("#Email").value;
+        const Password = document.querySelector("#Password").value;
+
+        // Validate
+        if (Userid == "" || Email == "" || Password == "") {
+            showAlert("Please fill in all fields", "danger");
+        }
+        else {
+            if (selectedRow == null) {
+                const list = document.querySelector("#user-list");
+                const row = document.createElement("tr");
+
+                row.innerHTML = `
+                    <td>${Userid}</td>
+                    <td>${Email}</td>
+                    <td>${Password}</td>
+                    <td>
+                    <a href="#" class="btn btn-warning btn-sm edit">Edit</a>
+                    <a href="#" class="btn btn-danger btn-sm delete">Delete</a>
+
+                `;
+                list.appendChild(row)
+                selectedRow = null;
+                showAlert("user Added", "success")
+
+
+            }
+            else {
+                selectedRow.children[0].textContent = Userid;
+                selectedRow.children[1].textContent = Email;
+                selectedRow.children[2].textContent = Password;
+                selectedRow = null;
+                showAlert("User Info Edited", "info");
+
+            }
+
+            clearFields();
+
+
+        }
+    });
+
+    // Edit Data 
+
+    document.querySelector("#user-list").addEventListener("click", (e) => {
+        target = e.target;
+        if (target.classList.contains("edit")) {
+            selectedRow = target.parentElement.parentElement;
+            document.querySelector("#Userid").value = selectedRow.children[0].textContent;
+            document.querySelector("#Email").value = selectedRow.children[1].textContent;
+            document.querySelector("#Password").value = selectedRow.children[2].textContent;
+
+        }
+    });
+
+    // Delete Data
+    document.querySelector("#user-list").addEventListener("click", (e) => {
+        target = e.target;
+        if (target.classList.contains("delete")) {
+            target.parentElement.parentElement.remove();
+            showAlert("User Data Deleted", "danger");
+        }
+    });
+
+    </script>
+
+</body>
+</html>

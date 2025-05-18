@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>deNco User Dashboard</title>
+
+    <!-- Import Google Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Raleway:100,300,400,500,700,900" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+    <!-- Custom Styles -->
+
+    <link rel="stylesheet" type="text/css" href="static/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="./static/css/user_dash.css">
+
+</head>
+<body>
+    <section id="menu">
+        <div class="logo">
+            <h1><a href="">deNco</a></h1>
+        </div>
+        <i class="fa-solid fa-bars menu-toggle"></i>
+        <i class="fa-solid fa-times menu-close" style="display: none;"></i>
+
+        <ul class="items">
+            <li><a href="admin.html"><i class="fa-solid fa-users"></i> Users </a></li>
+            <li><a href="admin_detection.html"><i class="fa-solid fa-sliders"></i> System Detection Logs</a></li>
+            <li><a href="#"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+        </ul>
+    </section>
+
+    <!-- Main Content -->
+    <section id="interface">
+        <div class="navigation">
+           
+            <div class="profile">
+                <i class="fa-solid fa-circle-user"></i>
+                <h2>Welcome , {{ current_user.username }}</h2>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <main class="count-table">
+                <section class="table-header"></section>
+                <section class="table-body">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User ID</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Total Count</th>
+                                <th>Used Resources</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+        
+                        <tbody>
+                            {% for log in logs %}
+                            <tr>
+                                <td>{{ log.user_id }}</td>
+                                <td>{{ log.date }}</td>
+                                <td>{{ log.time }}</td>
+                                <td>{{ log.total_count }}</td>
+                                <td>{{ log.used_resource }}</td>
+                                <td>
+                                    <p><strong>
+                                        <a href="#" class="btn btn-danger btn-sm delete">Delete</a>
+                                    </strong></p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>   
+                    </table>
+                </section>
+            </div>
+        </div>
+
+        
+    </section>
+    
+
+    <script>
+        const menuToggle = document.querySelector('.menu-toggle');
+        const menuClose = document.querySelector('.menu-close');
+        const menuItems = document.querySelector('.items');
+
+        menuToggle.addEventListener('click', function () {
+            menuItems.classList.toggle('active');
+            menuToggle.style.display = 'none';
+            menuClose.style.display = 'block';
+        });
+
+        menuClose.addEventListener('click', function () {
+            menuItems.classList.toggle('active');
+            menuToggle.style.display = 'block';
+            menuClose.style.display = 'none';
+        });
+    </script>
+
+</body>
+</html>

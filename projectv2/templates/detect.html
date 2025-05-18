@@ -12,8 +12,6 @@
             <h1 class="scanning-title">Scanning.....</h1>
 
             <div class="display-container">
-
-                
                 {% if is_static %}
                     <!-- Placeholder for image or video -->
                     <div class="media-display">
@@ -25,15 +23,31 @@
                                 Your browser does not support the video tag.
                             </video>
                         {% endif %}
+                        <!-- Heatmap overlay for static content -->
+                        <div class="heatmap-container">
+                            <canvas id="heatmapCanvas"></canvas>
+                        </div>
                     </div>
                 {% else %}
-                <!-- Live streaming integration -->
-                <div class="media-display">
-                    <div id="loader">
-                        <div class="spinner-border text-primary" role="status"></div>
+                    <!-- Live streaming integration -->
+                    <div class="media-display">
+                        <div id="loader">
+                            <div class="spinner-border text-primary" role="status"></div>
+                        </div>
+                        <img src="{{ url_for('video_feed') }}" alt="Live Webcam Feed">
+                        <!-- Heatmap overlay for live feed -->
+                        <div class="heatmap-container">
+                            <canvas id="heatmapCanvas"></canvas>
+                        </div>
                     </div>
-                    <img src="{{ url_for('video_feed') }}" alt="Live Webcam Feed">
-                </div>
+                    <!-- Audio Alert -->
+                    <div id="audio-alert" class="alert-box" style="display: none;">
+                        <div class="alert-content">
+                            <i class="fa fa-exclamation-triangle"></i>
+                            <span>High occupancy detected! (1+ people)</span>
+                            <button id="dismiss-alert" class="alert-close-btn">×</button>
+                        </div>
+                    </div>
                 {% endif %}
 
                 <!-- Loader (Initially Visible) -->
@@ -48,10 +62,17 @@
             <!-- Buttons Container -->
             <div class="btn-container">
                 <a href="{{ url_for('user_dash') }}" class="btn btn-danger action-btn" id="stop-btn">Return to Selection</a>
-                <button type="button" class="btn btn-danger action-btn" id="stop-btn">Refresh Detection</button>
+                <button type="button" class="btn btn-danger action-btn" id="reset-alert" style="display: none;">Re-enable Alert</button>
+                <button type="button" class="btn btn-danger action-btn" id="toggle-heatmap">Show Heatmap</button>
             </div>
         </div>
     </div>    
+
+     <!-- Audio Alert Element -->
+    <audio id="alertSound" loop>
+        <source src="{{ url_for('static', filename='audio/warning.mp3') }}" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
 
     <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
@@ -68,15 +89,244 @@
 
         // Socket.io script for updating people count
         const socket = io();
+        //Audio 
+        const alertSound = document.getElementById('alertSound');
+        const audioAlert = document.getElementById('audio-alert');
+        const dismissAlert = document.getElementById('dismiss-alert');
+        const resetAlertBtn = document.getElementById('reset-alert');
+        const PEOPLE_THRESHOLD = 1; //threshold
+        let audioPlaying = false;
+        let alertDismissed = false;
 
         socket.on('people_count', function(data) {
             document.getElementById('live-count').innerText = `People Count: ${data.count}`;
+
+            // Audio alert logic - Only activate if not dismissed
+            if (data.count >= PEOPLE_THRESHOLD && !alertDismissed) {
+                if (!audioPlaying) {
+                    alertSound.play().catch(e => console.error('Audio play error:', e));
+                    audioPlaying = true;
+                    audioAlert.style.display = 'block';
+                }
+            } else if (data.count < PEOPLE_THRESHOLD) {
+                if (audioPlaying) {
+                    alertSound.pause();
+                    alertSound.currentTime = 0;
+                    audioPlaying = false;
+                    audioAlert.style.display = 'none';
+                }
+            }
         });
 
+        // Dismiss button event handler
+        if (dismissAlert) {
+            dismissAlert.addEventListener('click', function() {
+                alertSound.pause();
+                alertSound.currentTime = 0;
+                audioPlaying = false;
+                alertDismissed = true;
+                audioAlert.style.display = 'none';
+                resetAlertBtn.style.display = 'inline-block'; // Show reset button
+            });
+        }
+
         document.getElementById('stop-btn').addEventListener('click', function() {
+            // Stop audio if playing when feed is stopped
+            if (audioPlaying) {
+                alertSound.pause();
+                alertSound.currentTime = 0;
+                audioPlaying = false;
+                audioAlert.style.display = 'none';
+            }
             fetch('/stop_feed', { method: 'POST' });
         });
 
+        // Reset Alert button handler
+        if (resetAlertBtn) {
+            resetAlertBtn.addEventListener('click', function() {
+                alertDismissed = false;
+                this.style.display = 'none';
+                // If count is still above threshold, immediately show alert
+                const currentCount = parseInt(document.getElementById('live-count').innerText.split(': ')[1]);
+                if (currentCount >= PEOPLE_THRESHOLD) {
+                    audioAlert.style.display = 'block';
+                    alertSound.play().catch(e => console.error('Audio play error:', e));
+                    audioPlaying = true;
+                    resetAlertBtn.style.display = 'none'; // hide reset button
+                }
+            });
+        }
+
+        // Heatmap variables
+        const heatmapCanvas = document.getElementById('heatmapCanvas');
+        const heatmapContainer = document.querySelector('.heatmap-container');
+        const toggleHeatmapBtn = document.getElementById('toggle-heatmap');
+        const heatmapCtx = heatmapCanvas ? heatmapCanvas.getContext('2d') : null;
+        let heatmapEnabled = false;
+        let heatmapPoints = [];
+        let heatmapUpdateInterval = null;
+
+        // Log initial state for debugging
+        console.log("Initial heatmap setup:");
+        console.log("- Canvas exists:", !!heatmapCanvas);
+        console.log("- Canvas container:", !!heatmapContainer);
+        console.log("- Toggle button:", !!toggleHeatmapBtn);
+
+        // Initialize heatmap size and position
+        function initHeatmapSize() {
+            const mediaDisplay = document.querySelector('.media-display');
+            const videoElement = document.querySelector('.media-display img, .media-display video');
+            
+            if (!heatmapCanvas || !mediaDisplay || !videoElement) {
+                console.error("Required elements not found for heatmap sizing");
+                return;
+            }
+            
+            console.log("Media display dimensions:", mediaDisplay.clientWidth, "x", mediaDisplay.clientHeight);
+            console.log("Video element dimensions:", videoElement.clientWidth, "x", videoElement.clientHeight);
+            
+            // Set canvas size to match video dimensions
+            heatmapCanvas.width = videoElement.clientWidth;
+            heatmapCanvas.height = videoElement.clientHeight;
+            
+            console.log("Set canvas dimensions to:", heatmapCanvas.width, "x", heatmapCanvas.height);
+        }
+
+        // Enhanced draw function
+        function drawHeatmap() {
+            if (!heatmapEnabled || !heatmapCanvas || !heatmapCtx) {
+                console.log("Heatmap disabled or canvas not available");
+                return;
+            }
+            
+            heatmapCtx.clearRect(0, 0, heatmapCanvas.width, heatmapCanvas.height);
+            
+            if (heatmapPoints.length === 0) {
+                console.log("No heatmap points to draw");
+                return;
+            }
+
+            console.log(`Drawing ${heatmapPoints.length} heatmap points`);
+            
+            heatmapPoints.forEach(point => {
+                try {
+                    // Scale coordinates to canvas size
+                    const x = (point.x / point.frame_width) * heatmapCanvas.width;
+                    const y = (point.y / point.frame_height) * heatmapCanvas.height;
+                    const radius = 30;
+                    
+                    const gradient = heatmapCtx.createRadialGradient(x, y, 0, x, y, radius);
+                    gradient.addColorStop(0, 'rgba(255, 0, 0, 0.8)');
+                    gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+                    
+                    heatmapCtx.fillStyle = gradient;
+                    heatmapCtx.beginPath();
+                    heatmapCtx.arc(x, y, radius, 0, Math.PI * 2);
+                    heatmapCtx.fill();
+                    
+                    // Add center dot for visualization
+                    heatmapCtx.fillStyle = 'white';
+                    heatmapCtx.fillRect(x-2, y-2, 4, 4);
+                } catch (err) {
+                    console.error("Error drawing heatmap point:", err, point);
+                }
+            });
+        }
+
+        // Update heatmap data
+        function updateHeatmap() {
+            fetch('/heatmap_data')
+                .then(response => {
+                    console.log("Heatmap data response status:", response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(points => {
+                    heatmapPoints = points;
+                    console.log(`Received ${points.length} heatmap points`);
+                    drawHeatmap();
+                })
+                .catch(error => {
+                    console.error('Heatmap error:', error);
+                    // Don't throw additional errors, just log
+                });
+        }
+
+        //heatmap toggle functionality
+        document.getElementById('toggle-heatmap').addEventListener('click', function() {
+            heatmapEnabled = !heatmapEnabled;
+            
+            if (heatmapEnabled) {
+                heatmapContainer.style.display = 'block';
+                this.textContent = 'Hide Heatmap';
+                this.classList.add('active');
+                // Force immediate update when turning on
+                updateHeatmap(); 
+            } else {
+                heatmapContainer.style.display = 'none';
+                this.textContent = 'Show Heatmap';
+                this.classList.remove('active');
+            }
+        });
+        // Initialize when page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM fully loaded");
+            
+            if (!heatmapCanvas || !heatmapContainer) {
+                console.error("Required heatmap elements not found");
+                return;
+            }
+            
+            // Initial visibility state
+            heatmapContainer.style.display = heatmapEnabled ? 'block' : 'none';
+            if (toggleHeatmapBtn) {
+                toggleHeatmapBtn.classList.toggle('active', heatmapEnabled);
+            }
+            
+            // Set up sizing and start the update loop
+            setTimeout(() => {
+                initHeatmapSize();
+                
+                // Clear any existing interval to avoid duplicates
+                if (heatmapUpdateInterval) {
+                    clearInterval(heatmapUpdateInterval);
+                }
+                
+                // Start heatmap update loop
+                heatmapUpdateInterval = setInterval(updateHeatmap, 1000);
+                console.log("Heatmap update interval started");
+            }, 1000); // Longer delay to ensure elements are rendered
+            
+            // Hide loader AFTER video loads or with longer timeout
+            // to ensure we see the loader even if video/image is displayed
+            const videoElement = document.querySelector('.media-display img, .media-display video');
+            if (videoElement) {
+                videoElement.onload = function() {
+                    // Add delay after content loads before hiding loader
+                    setTimeout(function() {
+                        document.getElementById('screen-loader').style.display = 'none';
+                    }, 17000); // 1 second delay after content loads
+                    // Reinitialize heatmap size after video loads
+                    initHeatmapSize();
+                };
+            }
+
+            // Fallback timeout to hide loader if content load event doesn't fire
+            setTimeout(function() {
+                document.getElementById('screen-loader').style.display = 'none';
+            }, 17000); // Extended from 3000 to 4000ms for more buffer
+        });
+
+        // Handle window resize to maintain correct canvas size
+        window.addEventListener('resize', function() {
+            console.log("Window resized, updating heatmap size");
+            initHeatmapSize();
+            drawHeatmap();
+        });
+        
+        // Stop and return to Dashboard
         socket.on('feed_stopped', function() {
             window.location.href = '/detect';
         });
