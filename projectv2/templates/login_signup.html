@@ -80,7 +80,7 @@
                 <h2 class="title">Sign in</h2>
                 <div class="input-field">
                     <i class="fas fa-envelope"></i>
-                    <input type="text" name="email" placeholder="Email Address" required>
+                    <input type="email" name="email" placeholder="Email Address" required>
                 </div>
                 <div class="input-field">
                     <i class="fas fa-lock"></i>
@@ -107,11 +107,11 @@
                 <h2 class="title">Sign up</h2>
                 <div class="input-field">
                     <i class="fas fa-user"></i>
-                    <input type="text" name="username" placeholder="User Name" required>
+                    <input type="text" name="username" placeholder="Username" required>
                 </div>
                 <div class="input-field">
                     <i class="fas fa-envelope"></i>
-                    <input type="text" name="email" placeholder="Email Address" required>
+                    <input type="email" name="email" placeholder="Email Address" required>
                 </div>
                 <div class="input-field">
                     <i class="fas fa-lock"></i>
@@ -141,15 +141,15 @@
         <div class="panels-container">
             <div class="panel left-panel">
                 <div class="content">
-                    <h3>Member of deNco?</h3>
-                    <p>Welcome back! <br> Log in to monitor people flow, track counts, and manage your smart space in real-time.</p>
+                    <h3>Member of Denco?</h3>
+                    <p>Welcome back! <br> Log in to detect people in an area, track counts, and manage your results securely.</p>
                     <button class="btn" id="sign-in-btn">Sign in</button>
                 </div>
                 <img src="{{ url_for('static', filename='imgs/signup.svg') }}" alt="" class="image">
             </div>
             <div class="panel right-panel">
                 <div class="content">
-                    <h3>New to deNco?</h3>
+                    <h3>New to Denco?</h3>
                     <p>Join Denco to access real-time people detection and counting tools built for smarter spaces</p>
                     <button class="btn" id="sign-up-btn">Sign up</button>
                 </div>
