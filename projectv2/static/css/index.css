@@ -644,7 +644,7 @@ welcome
   display: flex;
   align-items: center;
   justify-content: center;
-  background-image: linear-gradient( rgba(0, 0, 0, 0.5), rgba(0, 0, 0.2, 0)), url(../images/hero-img.jpg);
+  background-image: linear-gradient( rgba(63, 30, 74, 0.768), rgba(1, 1, 0, 0.642)), url(../images/hero-img.jpg); /*changes hero on 18th may*/
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover; 
