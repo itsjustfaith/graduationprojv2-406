@@ -31,21 +31,56 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+        .direct {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            z-index: 10; /* Ensure it stays on top */
+
+
+        }   
+        
+        .direct a {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 1.5rem;
+            color: #333;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            transition: 0.3s ease;
+        }
+        
+        .direct a:hover {
+            color:rgba(34, 34, 57, 0.7);
+            padding: 8px 20px;
+        }
+        
+        .direct i {
+            margin-right: 10px;
+            font-size: 1rem;
+        }
     </style>
 </head>
 <body>
+    
+    
     <div class="container">
+        <section class="direct">
+            <a href="{{ url_for('index') }}"><i class="fas fa-arrow-left"></i>Home</a>
+        </section>
         <div class="signin-signup">
-            <a href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='imgs/Chizcam-logo.png') }}" alt="ChizCam Logo" class="logo"></a>
 
-            
 
             <!-- Sign-In Form -->
             <form action="/login_signup" method="POST" class="sign-in-form">
                 <h2 class="title">Sign in</h2>
                 <div class="input-field">
                     <i class="fas fa-envelope"></i>
-                    <input type="text" name="email" placeholder="Email Address" required>
+                    <input type="email" name="email" placeholder="Email Address" required>
                 </div>
                 <div class="input-field">
                     <i class="fas fa-lock"></i>
@@ -72,7 +107,7 @@
                 <h2 class="title">Sign up</h2>
                 <div class="input-field">
                     <i class="fas fa-user"></i>
-                    <input type="text" name="username" placeholder="User Name" required>
+                    <input type="text" name="username" placeholder="Username" required>
                 </div>
                 <div class="input-field">
                     <i class="fas fa-envelope"></i>
@@ -106,21 +141,25 @@
         <div class="panels-container">
             <div class="panel left-panel">
                 <div class="content">
-                    <h3>Member of Brand?</h3>
-                    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Neque accusantium dolor, eos incidunt minima iure?</p>
+                    <h3>Member of Denco?</h3>
+                    <p>Welcome back! <br> Log in to detect people in an area, track counts, and manage your results securely.</p>
                     <button class="btn" id="sign-in-btn">Sign in</button>
                 </div>
                 <img src="{{ url_for('static', filename='imgs/signup.svg') }}" alt="" class="image">
             </div>
             <div class="panel right-panel">
                 <div class="content">
-                    <h3>New to Brand?</h3>
-                    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Neque accusantium dolor, eos incidunt minima iure?</p>
+                    <h3>New to Denco?</h3>
+                    <p>Join Denco to access real-time people detection and counting tools built for smarter spaces</p>
                     <button class="btn" id="sign-up-btn">Sign up</button>
                 </div>
                 <img src="{{ url_for('static', filename='imgs/signup.svg') }}" alt="" class="image">
             </div>
+
+
         </div>
+
+        
     </div>
 
     <script src="{{ url_for('static', filename='js/login_signup.js') }}"></script>
