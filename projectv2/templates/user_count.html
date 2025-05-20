@@ -57,10 +57,10 @@
                         <thead>
                             <tr>
                                 <th>User ID</th>
+                                <th>Date</th>
                                 <th>Time</th>
-                                <th>Action Date</th>
-                                <th>Used Resources</th>
                                 <th>Total Count</th>
+                                <th>Used Resources</th>
                                
                             </tr>
                         </thead>
@@ -71,8 +71,8 @@
                                 <td>{{ log.user_id }}</td>
                                 <td>{{ log.date }}</td>
                                 <td>{{ log.time }}</td>
-                                <td>{{ log.used_resource }}</td>
                                 <td>{{ log.total_count }}</td>
+                                <td>{{ log.used_resource }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>   

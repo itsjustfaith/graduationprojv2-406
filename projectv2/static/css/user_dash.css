@@ -13,7 +13,7 @@ body {
     position: relative;
     font-family: "Raleway", sans-serif; /* This line is redundant since the font is already set globally */
     display:flex;
-    background-color: #4abdc526;
+    background-color: #faf1fd;
 }
 
 #menu {
@@ -110,7 +110,6 @@ body {
     width: 100%;
     margin-left: 300px;
     position:relative;
-  
 }
 
 #interface .navigation{
@@ -271,9 +270,8 @@ features
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 20px; /* Adjust space between the cards */
-    padding: 20px;
+    padding: 10px;
     margin: auto;
-    margin-top:40px;
 }
 
 
@@ -897,3 +895,136 @@ tr{
   50% { opacity: 1; }
   100% { opacity: 0.5; }
 }
+
+/* IP Camera */
+.profile {
+      margin-left: auto; /* Push the profile section to the right */
+      display: flex;
+      align-items: center;
+      gap: 5px; /* Add spacing between the icon and text */
+}
+
+ 
+ 
+h3{
+  text-align: center  ;
+
+}
+
+
+
+.entry{
+  width: 100%;
+  max-width: 400px; /* Ensure responsiveness */
+  position: relative;
+  height: 80px;
+  line-height: 80px;
+  margin-bottom: 20px;
+}
+
+.input {
+  width: 100%;
+  outline: none;
+  font-size: 1.2em;
+  padding: 0 20px;
+  line-height: 50px;
+  border-radius: 10px;
+  border: 2px solid #f0ffff;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  transition: 0.3s ease;
+  font-weight: bold;
+}
+
+.label {
+  position: absolute;
+  font-size: 1.2em;
+  color: #f0ffff;
+  padding: 0 10px;
+  margin: 0 20px;
+  background-color: #1c2841;
+  transition: 0.3s ease;
+}
+
+.input:focus, .input:valid {
+  color: #1c2841;
+  border: 2px solid #6a0dad;
+}
+
+.input:focus + .label, .input:valid + .label {
+  color: #6a0dad;
+  transform: translateY(-30px);
+  font-size: 1em;
+}
+
+.button-input {
+  width: 40%;
+  display: block;
+  margin: 0 auto;
+  outline: none;
+  font-size: 1.4em;
+  line-height:35px;
+  border-radius: 10px;
+  border: 2px solid #f0ffff;
+  background:#581376;
+  color: #ffffff;
+}
+
+
+.button-input:hover {
+  background: #0d0911;
+  color: #fff;
+  border: 2px solid #090909;
+  transition: 0.5s ease;
+}
+
+.ip-container {
+  display: flex;
+  padding-top: 0;
+  margin-top: -5%;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  min-height: 40vh; /* Center the input form vertically */
+}
+
+.ip-container h3{
+  margin-top:0;
+}
+
+
+@media (max-width: 768px) {
+  .ip-container {
+    padding: 10px; /* Adjust padding for smaller screens */
+  }
+
+  .entry {
+    max-width: 90%; /* Adjust width for responsiveness */
+  }
+
+  .input {
+    font-size: 1em; /* Adjust font size for smaller screens */
+    line-height: 40px; /* Adjust line height for smaller screens */
+  }
+
+  .button-input {
+    font-size: 1em; /* Adjust button font size */
+    line-height: 40px; /* Adjust button line height */
+  }
+}
+
+@media (max-width: 480px) {
+    .ip-container h3 {
+      font-size: 1.2em; /* Adjust heading size for very small screens */
+    }
+
+    .entry {
+      flex-direction: column; /* Stack input and button vertically */
+      align-items: stretch; /* Ensure full width alignment */
+    }
+
+    .button-input {
+      margin-top: 10px; /* Add spacing between input and button */
+    }
+}
+ 
