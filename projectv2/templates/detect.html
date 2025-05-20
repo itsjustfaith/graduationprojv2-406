@@ -5,6 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>deNco Detection</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/detect_page.css') }}">
+
+    <style>
+        .threshold-control {
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #threshold-slider {
+            flex-grow: 1;
+            max-width: 200px;
+        }
+
+        #threshold-value {
+            font-weight: bold;
+            min-width: 20px;
+            display: inline-block;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
     <div class="container glass">
@@ -34,7 +55,7 @@
                         <div id="loader">
                             <div class="spinner-border text-primary" role="status"></div>
                         </div>
-                        <img src="{{ url_for('video_feed') }}" alt="Live Webcam Feed">
+                        <img src="{{ url_for('video_feed', source=video_source) if video_source else url_for('video_feed') }}" alt="Live Webcam Feed">
                         <!-- Heatmap overlay for live feed -->
                         <div class="heatmap-container">
                             <canvas id="heatmapCanvas"></canvas>
@@ -64,6 +85,11 @@
                 <a href="{{ url_for('user_dash') }}" class="btn btn-danger action-btn" id="stop-btn">Return to Selection</a>
                 <button type="button" class="btn btn-danger action-btn" id="reset-alert" style="display: none;">Re-enable Alert</button>
                 <button type="button" class="btn btn-danger action-btn" id="toggle-heatmap">Show Heatmap</button>
+                <div class="threshold-control">
+                    <label for="threshold-slider">Alert Threshold:</label>
+                    <input type="range" id="threshold-slider" min="1" max="40" value="1">
+                    <span id="threshold-value">1</span> people
+                </div>
             </div>
         </div>
     </div>    
@@ -94,21 +120,45 @@
         const audioAlert = document.getElementById('audio-alert');
         const dismissAlert = document.getElementById('dismiss-alert');
         const resetAlertBtn = document.getElementById('reset-alert');
-        const PEOPLE_THRESHOLD = 1; //threshold
+        const thresholdSlider = document.getElementById('threshold-slider');
+        const thresholdValue = document.getElementById('threshold-value');
+        let currentThreshold = 40; //threshold
         let audioPlaying = false;
         let alertDismissed = false;
+
+        thresholdSlider.addEventListener('input', function() {
+            currentThreshold = parseInt(this.value);
+            thresholdValue.textContent = currentThreshold;
+            
+            // Immediate feedback if current count exceeds new threshold
+            const currentCount = parseInt(document.getElementById('live-count').innerText.split(': ')[1] || 0);
+            if (currentCount >= currentThreshold && !alertDismissed) {
+                audioAlert.style.display = 'block';
+                if (!audioPlaying) {
+                    alertSound.play().catch(e => console.error('Audio play error:', e));
+                    audioPlaying = true;
+                }
+            } else {
+                audioAlert.style.display = 'none';
+                if (audioPlaying) {
+                    alertSound.pause();
+                    alertSound.currentTime = 0;
+                    audioPlaying = false;
+                }
+            }
+        });
 
         socket.on('people_count', function(data) {
             document.getElementById('live-count').innerText = `People Count: ${data.count}`;
 
             // Audio alert logic - Only activate if not dismissed
-            if (data.count >= PEOPLE_THRESHOLD && !alertDismissed) {
+            if (data.count >= currentThreshold && !alertDismissed) {
                 if (!audioPlaying) {
                     alertSound.play().catch(e => console.error('Audio play error:', e));
                     audioPlaying = true;
                     audioAlert.style.display = 'block';
                 }
-            } else if (data.count < PEOPLE_THRESHOLD) {
+            } else if (data.count < currentThreshold) {
                 if (audioPlaying) {
                     alertSound.pause();
                     alertSound.currentTime = 0;
@@ -148,7 +198,7 @@
                 this.style.display = 'none';
                 // If count is still above threshold, immediately show alert
                 const currentCount = parseInt(document.getElementById('live-count').innerText.split(': ')[1]);
-                if (currentCount >= PEOPLE_THRESHOLD) {
+                if (currentCount >= currentThreshold) {
                     audioAlert.style.display = 'block';
                     alertSound.play().catch(e => console.error('Audio play error:', e));
                     audioPlaying = true;

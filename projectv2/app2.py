@@ -1,3 +1,8 @@
+import os
+# Completely suppress FFmpeg logging
+os.environ['OPENCV_FFMPEG_LOGLEVEL'] = '8'  # Only fatal errors
+os.environ['GST_DEBUG'] = '0'  # Suppress GStreamer logs
+
 from flask import Flask, render_template, Response, redirect, url_for, request, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -7,8 +12,12 @@ from flask_migrate import Migrate
 from ultralytics import YOLO  # Import YOLOv8
 import base64
 import re
-import torch  # Add this import
+import torch 
 import torch.backends.cudnn as cudnn  # For CUDA optimization
+import warnings
+from contextlib import redirect_stderr, nullcontext
+import io
+
 
 # DETECTION LIBRARIES
 from flask import Flask, render_template, request, redirect, url_for, Response
@@ -363,10 +372,12 @@ def detect_people(frame, model):
         for result in results:
             boxes = result.boxes.cpu().numpy()
             for box in boxes:
-                if int(box.cls) == 0 and box.conf > 0.4:  # Class 0 is person
+                cls_id = box.cls.item() if hasattr(box.cls, 'item') else int(box.cls)
+                conf = box.conf.item() if hasattr(box.conf, 'item') else float(box.conf)
+                if cls_id == 0 and conf > 0.4:  # Class 0 is person
                     x1, y1, x2, y2 = box.xyxy[0].astype(int)
                     bounding_boxes.append([x1, y1, x2-x1, y2-y1])
-                    confidences.append(float(box.conf))
+                    confidences.append(conf)
                     
                     # Store center point of each detection with integer values
                     center_x = int((x1 + x2) // 2)
@@ -404,52 +415,83 @@ def get_heatmap_data():
     except Exception as e:
         app.logger.error(f"Error in heatmap_data: {str(e)}")
         return jsonify([]), 200  # Return empty array instead of error
+
 # Generate video frames with detection
-def generate_frames():
+def generate_frames(video_source=None):
     global stop_feed, max_people_count
-    model = initialize_yolo()
-    if model is None:
-        print("Failed to initialize YOLO model")
-        return
     
-    video_sources = [
-        # "rtsp://172.20.54.240:554/stream1",
-        1,  
-        0  
-    ]
+    # Use a more robust temporary file handling
+    import tempfile
+    import sys
+    from contextlib import contextmanager
+    
+    @contextmanager
+    def suppress_stderr():
+        original_stderr = sys.stderr
+        try:
+            with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+                sys.stderr = f
+                yield
+        finally:
+            sys.stderr = original_stderr
+            try:
+                if os.path.exists(f.name):
+                    os.unlink(f.name)  # More reliable than remove on Windows
+            except:
+                pass  # Ignore any cleanup errors
 
-    cap = None
-    for source in video_sources:
-        cap = cv2.VideoCapture(source)
-        if cap.isOpened():
-            print(f"Using video source: {source}")
-            break
-        cap.release()
-
-    if not cap or not cap.isOpened():
-        print("No valid camera source found.")
-        return
-
-    while True:
-        if stop_feed:
-            break
-
-        success, frame = cap.read()
-        if not success:
-            break
+    with suppress_stderr():
+        model = initialize_yolo()
+        if model is None:
+            print("Failed to initialize YOLO model")
+            return
         
-        boxes, confidences = detect_people(frame, model)
-        max_people_count = max(max_people_count, people_count)
-       
-        for i, (x, y, w, h) in enumerate(boxes):
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            cv2.putText(frame, f"Person {confidences[i]:.2f}", 
-                       (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+        try:
+            # If no specific source was set, try default sources
+            if video_source is None:
+                video_sources = [1, 0]  # Default camera indices
+                cap = None
+                for source in video_sources:
+                    cap = cv2.VideoCapture(source)
+                    if cap.isOpened():
+                        print(f"Using video source: {source}")
+                        break
+                    cap.release()
+            else:
+                # Use the provided video source (IP camera)
+                cap = cv2.VideoCapture(video_source)
+                print(f"Using IP camera: {video_source}")
 
-        ret, buffer = cv2.imencode('.jpg', frame)
-        yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+            if not cap or not cap.isOpened():
+                print("No valid camera source found.")
+                return
 
-    cap.release()
+            try:
+                while not stop_feed:
+                    success, frame = cap.read()
+                    if not success:
+                        break
+                    
+                    boxes, confidences = detect_people(frame, model)
+                    max_people_count = max(max_people_count, people_count)
+                   
+                    for i, (x, y, w, h) in enumerate(boxes):
+                        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                        cv2.putText(frame, f"Person {confidences[i]:.2f}", 
+                                   (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+
+                    ret, buffer = cv2.imencode('.jpg', frame)
+                    yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+                    
+            except GeneratorExit:
+                # Handle graceful shutdown when client disconnects
+                pass
+                
+            finally:
+                cap.release()
+                
+        except Exception as e:
+            print(f"Video processing error: {str(e)}")
 
 # Handle image upload
 @app.route('/upload_image', methods=['POST'])
@@ -653,6 +695,14 @@ def detect():
         resource_type = request.form.get('resource_type')
         session['used_resource'] = resource_type
 
+        if resource_type == 'ip_camera':
+            ip_address = request.form.get('ip_address')
+            # Formatting the IP address into a proper RTSP URL
+            rtsp_url = f"rtsp://{ip_address}:554/stream1"  # Adjust this based on your camera's RTSP URL format
+            stop_feed = False
+            socketio.start_background_task(background_people_count)
+            return render_template('detect.html', resource_type='live', people_count=people_count, video_source=rtsp_url)
+
     resource_type = request.form.get('resource_type')
     if resource_type == 'live':
         stop_feed = False
@@ -679,7 +729,10 @@ def check_audio():
 # Video feed route
 @app.route('/video_feed')
 def video_feed():
-    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    video_source = request.args.get('source')
+    if video_source == 'None':
+        video_source = None
+    return Response(generate_frames(video_source), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 # Stop feed route
 @app.route('/stop_feed', methods=['POST'])
@@ -689,6 +742,9 @@ def stop_feed_func():
     stop_feed = True
     heatmap_data = []  # Clear heatmap data when feed stops
     socketio.emit('feed_stopped')
+
+    import time
+    time.sleep(0.5)  # Allow 500ms for cleanup
 
     used_resource = session.get('used_resource', 'Live Feed')
     if used_resource == 'live':
@@ -756,6 +812,10 @@ def ensure_admin_exists():
 
 # Initialize database
 if __name__ == '__main__':
+    # Suppress all warnings
+    import warnings
+    warnings.filterwarnings("ignore")
+
     with app.app_context():
         db.create_all()
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)
