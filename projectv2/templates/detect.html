@@ -5,14 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>deNco Detection</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/detect_page.css') }}">
-
     <style>
-        .threshold-control {
-            margin: 15px 0;
+        body {
+            margin: 0;
+            padding: 0;
+            background: rgba(67, 27, 105, 0.59);   
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Raleway', sans-serif;
+        }
+            
+      
+          .threshold-control {
+            margin: 0;
             display: flex;
             align-items: center;
             gap: 10px;
         }
+
+        .threshold-control label, .threshold-control p {
+           
+        font-family: 'Raleway', sans-serif;
+        font-weight: 500;
+        font-size: 1.2rem;
+    }
+    
 
         #threshold-slider {
             flex-grow: 1;
@@ -25,12 +44,32 @@
             display: inline-block;
             text-align: center;
         }
+
+        
+
+        .btn-detection , .btn-detection a{
+            background-color: blueviolet;
+            color: #fff;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(137, 43, 226, 0.3);
+        }
+
+        .btn-detection:hover {
+            background-color: darkblue;
+            box-shadow: 0 6px 18px rgba(0, 0, 139, 0.4);
+            transform: translateY(-2px);
+        }
+        
     </style>
 </head>
 <body>
-    <div class="container glass">
-        <div class="content-wrapper">
-            <h1 class="scanning-title">Scanning.....</h1>
+     <div class="glass">
 
             <div class="display-container">
                 {% if is_static %}
@@ -82,16 +121,15 @@
 
             <!-- Buttons Container -->
             <div class="btn-container">
-                <a href="{{ url_for('user_dash') }}" class="btn btn-danger action-btn" id="stop-btn">Return to Selection</a>
-                <button type="button" class="btn btn-danger action-btn" id="reset-alert" style="display: none;">Re-enable Alert</button>
-                <button type="button" class="btn btn-danger action-btn" id="toggle-heatmap">Show Heatmap</button>
-                <div class="threshold-control">
+                <a href="{{ url_for('user_dash') }}" class="btn-detection" id="stop-btn">Return to Selection</a>
+                <button type="button" class="btn-detection" id="reset-alert" style="display: none;">Re-enable Alert</button>
+                <button type="button" class="btn-detection" id="toggle-heatmap">Show Heatmap</button>
+                <div class="threshold-control" >
                     <label for="threshold-slider">Alert Threshold:</label>
                     <input type="range" id="threshold-slider" min="1" max="40" value="1">
-                    <span id="threshold-value">1</span> people
+                    <p><span id="threshold-value">1</span> people</p>
                 </div>
             </div>
-        </div>
     </div>    
 
      <!-- Audio Alert Element -->
@@ -380,6 +418,8 @@
         socket.on('feed_stopped', function() {
             window.location.href = '/detect';
         });
+
+        
     </script>
 </body>
 </html>

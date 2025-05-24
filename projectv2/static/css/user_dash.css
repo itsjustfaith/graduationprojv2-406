@@ -301,7 +301,7 @@ features
   }
   
   .features-small-item:hover .icon {
-    background-color: #fc9dc55c;
+  background-color: #3f187282;
   }
   
   .features-small-item .icon {
@@ -315,7 +315,7 @@ features
     margin: auto;
     position: relative;
     margin-bottom: 20px;
-    background: #8261ee;
+  background: #433379;
     -webkit-border-radius: 50%;
     -moz-border-radius: 50%;
     border-radius: 50%;

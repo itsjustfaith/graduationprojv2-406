@@ -2,37 +2,36 @@
 
 /* Global Styles */
 body {
-    background-image: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0.2, 0)), url(../images/hero-img.jpg);
-    background-size: cover; /* Ensures the image covers the entire viewport */
-    background-position: center;
-    background-attachment: fixed; /* Prevents background scrolling */
-    background-repeat: no-repeat; /* Prevents repeating */
-    font-family: "Raleway", sans-serif;
     margin: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    overflow: hidden; /* Prevents scrollbars */
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Raleway', sans-serif;
 }
 
 /* Screen_Loader */
 /* Display Container */
 .display-container {
     position: relative;
-    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
+    width: 80vw;
+    height: 80vh;
+    justify-content: center;
+    overflow: hidden;
 }
 
 /* Media Display (Always Visible) */
 .media-display {
     position: relative;
     width: 100%;
-    max-width: 800px;
-    height: 500px;
+    max-width: 100%;
+    height: 100%;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     border-radius: 10px;
@@ -47,6 +46,7 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     display: flex;
+    justify-content: center;
     flex-direction: column;
     align-items: center;
     padding: 15px;
@@ -68,9 +68,8 @@ body {
     border-radius: 15px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
-    width: 85%;
-    max-width: 800px;
-    padding: 30px;
+    padding: 10px;
+    justify-content: center;
     text-align: center;
 }
 
@@ -91,34 +90,20 @@ body {
     margin-bottom: 10px;
 }
 
-/* Display Container */
-.display-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    margin-bottom: 20px;
-}
+
 
 /* Media Display */
 .media-display {
-    width: 100%;
-    max-width: 800px;
-    height: 450px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 10px;
-    overflow: hidden;
-    border: 2px solid #fff;
+   width: 80vw;
+            height: 80vh;
+            align-items: center;
+            overflow: hidden;
 }
 
 .media-display img,
 .media-display video {
-    width: 100%;
-    height: 100%;
+   width: 80vw;
+            height: 80vh;
     object-fit: cover; /* Ensures full fit without stretching */
 }
 
@@ -127,20 +112,20 @@ body {
 .detected-count {
     font-size: 20px;
     font-weight: bold;
-    color: white;
-    margin-top: 15px;
+    color: rgb(3, 3, 3);
+    margin-top: 5px;
     text-align: center;
 }
 
 /* Button Container */
 .btn-container {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
+    display: inline-block;
+    justify-content:center;
+    gap: 5px;
 }
 
 /* Action Buttons */
-.action-btn {
+/* .action-btn {
     width: 180px;
     padding: 10px 15px;
     text-align: center;
@@ -156,48 +141,56 @@ body {
 
 .action-btn:hover {
     background-color: violet;
-}
-
+} */
 /* Responsive Adjustments */
-@media (max-width: 768px) {
-    .glass {
-        width: 90%;
-        padding: 20px;
+@media (max-width: 1024px) {
+    .display-container {
+        width: 95vw;
+        height: 85vh;
     }
 
     .media-display {
-        height: 300px;
+        height: 70vh;
+    }
+}
+
+@media (max-width: 768px) {
+    .media-display {
+        height: 60vh;
+    }
+
+    .action-btn {
+        font-size: 14px;
+        min-width: 130px;
+        padding: 10px 20px;
     }
 
     .detected-count {
         font-size: 18px;
     }
-
-    .action-btn {
-        width: 160px;
-        font-size: 14px;
-    }
 }
 
 @media (max-width: 480px) {
-    .glass {
-        width: 95%;
-        padding: 15px;
+    .display-container {
+        width: 100vw;
+        height: 90vh;
     }
 
     .media-display {
-        height: 250px;
+        height: 50vh;
+    }
+
+    .action-btn {
+        font-size: 12px;
+        min-width: 120px;
+        padding: 8px 16px;
     }
 
     .detected-count {
         font-size: 16px;
     }
-
-    .action-btn {
-        width: 140px;
-        font-size: 12px;
-    }
 }
+
 
 /* Alert CSS */
 .alert-box {
@@ -266,6 +259,8 @@ body {
 }
 
 #toggle-heatmap:hover{
-    background-color: violet;
+    background-color: darkblue;
+    box-shadow: 0 6px 18px rgba(0, 0, 139, 0.4);
+    transform: translateY(-2px);
 }
 
