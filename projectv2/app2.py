@@ -374,7 +374,7 @@ def detect_people(frame, model):
             for box in boxes:
                 cls_id = box.cls.item() if hasattr(box.cls, 'item') else int(box.cls)
                 conf = box.conf.item() if hasattr(box.conf, 'item') else float(box.conf)
-                if cls_id == 0 and conf > 0.4:  # Class 0 is person
+                if cls_id == 0 and conf > 0.6:  # Class 0 is person
                     x1, y1, x2, y2 = box.xyxy[0].astype(int)
                     bounding_boxes.append([x1, y1, x2-x1, y2-y1])
                     confidences.append(conf)
