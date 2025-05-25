@@ -51,8 +51,8 @@ https://templatemo.com/tm-535-softy-pinko
                         <!-- ***** Menu Start ***** -->
                         <ul class="nav">
                             <li><a href="{{ url_for('index') }}" class="active">Home</a></li>
-                            <li><a href="#services">Services</a></li>
-                            <li><a href="#about">About Us</a></li>
+                            <li><a href="#work-process">Services</a></li>
+                            <li><a href="#testimonials">About Us</a></li>
                             <li><a href="#contact-us">Contact Us</a></li>
                             <li><a href="{{ url_for('login_signup') }}"><i class="fa fa-user"></i></i></a></li>
 
@@ -232,7 +232,7 @@ https://templatemo.com/tm-535-softy-pinko
 
     <div class="team_member">
         <div class="member_img">
-            <img src="{{ url_for('static', filename='images/nada_img2.jpeg') }}" alt="our_team">
+            <img src="{{ url_for('static', filename='images/james_img1.jpg') }}" alt="our_team">
             <div class="social_media">
                 <div class="item"><i class="fa fa-instagram"></i></div>
                 <div class="item"><i class="fa fa-linkedin"></i></div>
@@ -240,7 +240,7 @@ https://templatemo.com/tm-535-softy-pinko
             </div>
         </div>
         <h3>James</h3>
-        <span>Backend Developer</span>
+        <span> Lead Backend Developer</span>
     </div>
 
 </div>
@@ -272,7 +272,7 @@ https://templatemo.com/tm-535-softy-pinko
                     <form action ="https://api.web3forms.com/submit" method="POST" class="feedback-left">
                            <div class="feedback-left-title">
                             </div>
-                            <input type="hidden" name="access_key" value="32504ffc-69aa-473b-8dcc-df97e7732eda">
+                            <input type="hidden" name="access_key" value="9e4c1679-3f08-4504-a4bc-f554dea7458f">
                             <input type="text" name="name" class="contact-inputs" placeholder="Your Name" required>
                             <input type="email" name="email" class="contact-inputs" placeholder="Your Email" required>
                             <textarea name="message" class="contact-inputs" placeholder="Your Message" required></textarea>
@@ -319,6 +319,26 @@ https://templatemo.com/tm-535-softy-pinko
     
     <!-- Global Init -->
     <script src="{{ url_for('static', filename='js/custom.js') }}"></script>
+
+    <script>
+    document.querySelector('.feedback-left').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const form = e.target;
+    const data = new FormData(form);
+    const response = await fetch(form.action, {
+        method: 'POST',
+        body: data,
+        headers: { 'Accept': 'application/json' }
+    });
+    if (response.ok) {
+        alert('Thank you for your feedback!');
+        form.reset();
+    } else {
+        alert('There was an error sending your message. Please try again.');
+    }
+    });
+    </script>
+    
 
   </body>
 </html>
