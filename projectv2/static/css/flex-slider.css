@@ -1,17 +1,5 @@
-/*
- * jQuery FlexSlider v2.7.1
- * http://www.woothemes.com/flexslider/
- *
- * Copyright 2012 WooThemes
- * Free to use under the GPLv2 and later license.
- * http://www.gnu.org/licenses/gpl-2.0.html
- *
- * Contributing author: Tyler Smith (@mbmufffin)
- *
- */
-/* ====================================================================================================================
- * FONT-FACE
- * ====================================================================================================================*/
+/* 
+
 @font-face {
   font-family: 'flexslider-icon';
   src: url('../fonts/flexslider-icon.eot');
@@ -21,7 +9,6 @@
 }
 /* ====================================================================================================================
  * RESETS
- * ====================================================================================================================*/
 .flex-container a:hover,
 .flex-slider a:hover {
   outline: none;
@@ -39,7 +26,6 @@
 }
 /* ====================================================================================================================
  * BASE STYLES
- * ====================================================================================================================*/
 .flexslider {
   margin: 0;
   padding: 0;
@@ -71,7 +57,7 @@ html[xmlns] .flexslider .slides {
 }
 /* ====================================================================================================================
  * DEFAULT THEME
- * ====================================================================================================================*/
+ * 
 .flexslider {
   margin: 0;
   background: #fff;
@@ -103,17 +89,19 @@ html[xmlns] .flexslider .slides {
 }
 .loading .flex-viewport {
   max-height: 300px;
-}
+
+
 @-moz-document url-prefix() {
   .loading .flex-viewport {
     max-height: none;
   }
 }
+}
 .carousel li {
   margin-right: 5px;
 }
 .flex-direction-nav {
-  *height: 0;
+  height: 0;
 }
 .flex-direction-nav a {
   text-decoration: none;
@@ -268,7 +256,6 @@ html[xmlns] .flexslider .slides {
 }
 /* ====================================================================================================================
  * RESPONSIVE
- * ====================================================================================================================*/
 @media screen and (max-width: 860px) {
   .flex-direction-nav .flex-prev {
     opacity: 1;
