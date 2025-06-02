@@ -1450,29 +1450,33 @@ preloader
   }
 }
 
-
+/*the new css*/
 .wrapper {
-  background-image: linear-gradient(127deg, #f2f2fe 90%, #f2f2fe 51%);
-  /* margin-top: 20px; */
-  margin-bottom: 0px;
+  margin-top: 20px;
+  margin-bottom: 40px;
   text-align: center;
 }
-
-
-
+ 
+.wrapper h1 {
+ 
+  font-size: 38px;
+  margin-bottom: 25px;
+  font-family: "Raleway", sans-serif;
+}
+ 
 .wrapper .our_team {
   display: flex;
   width: auto;
   justify-content: center;
   flex-wrap: wrap;
 }
-
+ 
 .wrapper .our_team .team_member {
   width: 250px;
   margin: 5px;
   padding: 20px 10px;
 }
-
+ 
 .wrapper .our_team .team_member .member_img {
   max-width: 190px;
   width: 100%;
@@ -1483,14 +1487,14 @@ preloader
   cursor: pointer;
   position: relative;
 }
-
+ 
 .wrapper .our_team .team_member .member_img img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
 }
-
+ 
 .wrapper .our_team .team_member h3 {
   text-transform: uppercase;
   font-size: 18px;
@@ -1498,18 +1502,18 @@ preloader
   letter-spacing: 2px;
   margin: 15px 0 0;
 }
-
+ 
 .wrapper .our_team .team_member span {
   font-size: 10px;
-
+ 
 }
-
+ 
 .wrapper .our_team .team_member p {
   margin-top: 20px;
   font-size: 14px;
   line-height: 20px;
 }
-
+ 
 .wrapper .our_team .team_member .social_media {
   position: absolute;
   top: 5px;
@@ -1524,19 +1528,18 @@ preloader
   transform: scale(0);
   transition: all 0.5s ease;
 }
-
+ 
 .wrapper .our_team .team_member .social_media .item {
   margin: 0 10px;
 }
-
+ 
 .wrapper .our_team .team_member .social_media .item .fab {
   color: #8c7ae6;
   font-size: 20px;
 }
-
+ 
 .wrapper .our_team .team_member .member_img:hover .social_media {
   transform: scale(1);
 }
-
-
+ 
 
