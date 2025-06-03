@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>deNco User Dashboard</title>
+    <title>deNco Admin Detection Dashboard</title>
 
     <!-- Import Google Fonts -->
     <link href="https://fonts.googleapis.com/css?family=Raleway:100,300,400,500,700,900" rel="stylesheet">
@@ -11,10 +11,8 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
-    <!-- Bootstrap -->
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
 
-    <!-- Custom Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/user_dash.css') }}">
 
     <style>
@@ -33,7 +31,6 @@
 
 </head>
 <body>
-    <!-- Sidebar / Topbar -->
     <section id="menu">
         <div class="logo">
             <h1><a href="#">deNco</a></h1>
@@ -48,7 +45,6 @@
         </ul>
     </section>
 
-    <!-- Main Content -->
     <section id="interface">
         <div class="navigation">
            
@@ -85,7 +81,7 @@
                         </thead>
         
                         <tbody id="logs-list">
-                            
+                            <!-- Log data will be loaded here -->
                         </tbody>   
                     </table>
                 </section>

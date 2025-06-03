@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Profile</title>
+    <title> deNco User Profile</title>
 
   <!-- Import Google Fonts -->
   <link href="https://fonts.googleapis.com/css?family=Raleway:100,300,400,500,700,900" rel="stylesheet">
@@ -29,10 +29,6 @@
         <i class="fa-solid fa-bars menu-toggle"></i>
         <i class="fa-solid fa-times menu-close" style="display: none;"></i>
 
-        
-
-
-
         <ul class="items">
             <li><a href="{{ url_for('user_dash') }}"><i class="fa-solid fa-tasks"></i> Action Hub</a></li>
             <li><a href="{{ url_for('user_profile') }}"><i class="fa-solid fa-pen-to-square"></i> Profile</a></li>
@@ -41,13 +37,13 @@
         </ul>
     </section>
 
-    <!-- addition of user profile ui , reference our figma designs for design specs -->
+    <!-- addition of user profile ui , reference our figma designs for design specs done by faith  -->
     <section id="interface">
         <div class="navigation">
            
             <div class="profile">
                 <i class="fa-solid fa-circle-user"></i>
-                <h2>Welcome , {{ current_user.username }}</h2>
+                <h2>Welcome , {{ current_user.username }}</h2> <!---backend fix this-->
             </div>
         </div>
 
@@ -96,7 +92,7 @@
                         <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm Password *">
                     </div>
 
-                    <!---3 buttons added like discussed in meeting-->
+                    <!---3 buttons added like discussed in last meeting-->
                     <button type="button" id="editProfileBtn" class="btn btn-secondary">Edit Profile</button>
                     <button type="button" id="saveChangesBtn" class="btn btn-primary" style="display: none;">Save Changes</button>
                     <button type="button" id="cancelBtn" class="btn btn-danger" style="display: none;">Cancel</button>
@@ -152,6 +148,7 @@ toggleNewPassword.addEventListener("click", () => {
         toggleNewPassword.classList.remove("fa-eye");
         toggleNewPassword.classList.add("fa-eye-slash");
     } else {
+        //else logic doesnt seem to be working please take a look (james)
         newPasswordEl.type = "password";
         toggleNewPassword.classList.remove("fa-eye-slash");
         toggleNewPassword.classList.add("fa-eye");
@@ -163,7 +160,7 @@ const confirmPasswordEl = document.querySelector("#confirmPassword");
 
 toggleConfirmPassword.addEventListener("click", () => {
     if (confirmPasswordEl.type === "password") {
-        confirmPasswordEl.type = "text";
+        confirmPasswordEl.type = "text"; //confirm password needsfixing 
         toggleConfirmPassword.classList.remove("fa-eye");
         toggleConfirmPassword.classList.add("fa-eye-slash");
     } else {
@@ -174,7 +171,7 @@ toggleConfirmPassword.addEventListener("click", () => {
 });
 
 const editProfileBtn = document.querySelector("#editProfileBtn");
-const saveChangesBtn = document.querySelector("#saveChangesBtn");
+const saveChangesBtn = document.querySelector("#saveChangesBtn"); //save changes butonts should be okay now , verify nada
 const cancelBtn = document.querySelector("#cancelBtn");
 const formFields = document.querySelectorAll("#username, #email,#password, #oldPassword, #newPassword, #confirmPassword");
 
@@ -191,7 +188,7 @@ editProfileBtn.addEventListener("click", () => {
     document.querySelector("#confirmPasswordGroup").style.display = "block";
     editProfileBtn.style.display = "none";
     saveChangesBtn.style.display = "inline-block";
-    cancelBtn.style.display = "inline-block";
+    cancelBtn.style.display = "inline-block";//please make it inlineblock (for nada)
 });
 
 saveChangesBtn.addEventListener("click", () => {
