@@ -1,254 +1,276 @@
 import os
-# Completely suppress FFmpeg logging
-os.environ['OPENCV_FFMPEG_LOGLEVEL'] = '8'  # Only fatal errors
-os.environ['GST_DEBUG'] = '0'  # Suppress GStreamer logs
 
+# Suppress verbose FFmpeg output to reduce console noise
+os.environ['OPENCV_FFMPEG_LOGLEVEL'] = '8'  # Show only critical FFmpeg errors
+os.environ['GST_DEBUG'] = '0'  # Disable GStreamer debug output
+
+# Import Flask modules and relevant helpers
 from flask import Flask, render_template, Response, redirect, url_for, request, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from flask_migrate import Migrate
-from ultralytics import YOLO  # Import YOLOv8
+from ultralytics import YOLO  # Load YOLO for object detection
 import base64
 import re
-import torch 
-import torch.backends.cudnn as cudnn  # For CUDA optimization
+import torch
+import torch.backends.cudnn as cudnn  # Enable CUDA backend optimization
 import warnings
 from contextlib import redirect_stderr, nullcontext
 import io
 
-
-# DETECTION LIBRARIES
-from flask import Flask, render_template, request, redirect, url_for, Response
+# Duplicate imports – consider reviewing for cleanup
 from flask_socketio import SocketIO, emit
 import cv2
-import os
 import numpy as np
 
-# Initialize Flask app and configurations
+# -- Time to cook a Flask app --
 app = Flask(__name__)
 socketio = SocketIO(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'  # SQLite database file
-app.config['SECRET_KEY'] = 'mysecretkey'  # Secret key for Flask session management
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Disable modification tracking
 
-# Initialize SQLAlchemy
+# Note: we are using SQLite for simplicity and local development
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
+app.config['SECRET_KEY'] = 'mysecretkey'  # Secret key for session management
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Disable SQLAlchemy event tracking to improve performance
+
+# DB Stuff
 db = SQLAlchemy(app)
-
-# Initialize Flask-Migrate
 migrate = Migrate(app, db)
 
-# Initialize Flask-Login
+# User login logic incoming
 login_manager = LoginManager(app)
-login_manager.login_view = 'login'  # Set the login view for Flask-Login
+login_manager.login_view = 'login'  # Redirects to login if you're not in
 
-# Define the User model
+# Quick note: YOLO model path is hardcoded. We should maybe fix that later?
+
+# --- DATABASE THINGS ---
+# We are using SQLAlchemy ORM for our users
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(150), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
+    username = db.Column(db.String(150), unique=True, nullable=False)  # Username length set to accommodate typical inputs
+    email = db.Column(db.String(120), unique=True, nullable=False)  # Ensure emails are unique for account integrity
     password = db.Column(db.String(200), nullable=False)
-    is_admin = db.Column(db.Boolean, default=False)  # Add admin flag
+    is_admin = db.Column(db.Boolean, default=False)  # Boolean field to assign admin privileges
 
     def __repr__(self):
-        return f'<User {self.email}>'
+        return f"<User email='{self.email}'>"  # Not really necessary, but nice for debugging
 
-# Define DetectionLog model
+# Track all the detection going on
 class DetectionLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.String(20), nullable=False)
+    date = db.Column(db.String(20), nullable=False)  # yeah, it's a string... don't judge
     time = db.Column(db.String(20), nullable=False)
-    used_resource = db.Column(db.String(50), nullable=False)
+    used_resource = db.Column(db.String(50), nullable=False)  # Could be camera, image, video etc.
     total_count = db.Column(db.Integer, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship('User', backref='detection_logs')
+    user = db.relationship('User', backref='logs_that_this_user_owns')
 
     def __repr__(self):
-        return f'<DetectionLog {self.date} {self.time} {self.used_resource} {self.total_count}>'
+        return f"<DetectionLog when={self.date} @ {self.time} | method={self.used_resource} | count={self.total_count}>"
 
+# Because SQLite really likes to keep counting, we reset those sequences by ourselves
 def reset_auto_increment():
-    db.session.execute('DELETE FROM sqlite_sequence WHERE name="detection_log";')
-    db.session.execute('DELETE FROM sqlite_sequence WHERE name="user";')
-    db.session.commit()
+    try:
+        db.session.execute('DELETE FROM sqlite_sequence WHERE name="detection_log";')
+        db.session.execute('DELETE FROM sqlite_sequence WHERE name="user";')
+        db.session.commit()
+    except Exception as e:
+        print(f"Hmm, could not reset auto-increments: {e}")  # Please do not fail us, Im tired
 
-# Load user function for Flask-Login
+# --- LOGIN AND SESSION MAGIC ---
+
+# This one helps Flask-Login recognize who's who
 @login_manager.user_loader
-def load_user(user_id):
-    return db.session.get(User, int(user_id))  # Updated to use session.get()
+def load_user(uid):
+    try:
+        return db.session.get(User, int(uid))  # Apparently the new hip way to get a user
+    except:
+        return None  # If anything explodes, we just pretend we found nothing
 
-# Admin login check
-def is_admin(user):
-    return user.is_authenticated and user.is_admin
+# Just a tiny utility to check if someone is blessed with admin rights
+def is_admin(suspect_user):
+    return suspect_user.is_authenticated and suspect_user.is_admin  # Plain and simple
 
-#Landing Page route
+# --- LANDING & AUTH ROUTES ---
+
 @app.route('/')
 def index():
+    # Nothing fancy here, just the welcome page/hook
     return render_template('index.html')
+
 
 @app.route('/login')
 def login():
+    # We use one template for both login and signup, because... efficiency!
     return render_template('login_signup.html')
+
 
 @app.route('/login_signup', methods=['GET', 'POST'])
 def login_signup():
     if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-        confirm_password = request.form.get('confirm_password')
-        username = request.form.get('username')
+        # Grab stuff from the form... assuming it’s all there
+        email = request.form.get('email')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')  # only present during signup
+        username = request.form.get('username')  # also optional in signin
 
         user = User.query.filter_by(email=email).first()
 
-        if confirm_password:  # Signup logic
+        if confirm_password:  # this must be a signup attempt
             if user:
-                flash('Email already exists! Please log in.', 'signup_error')
+                flash("Looks like someone's already using that email!", 'signup_error')
                 return redirect(url_for('login_signup', form='signup'))
-            elif password != confirm_password:
-                flash('Passwords do not match!', 'signup_error')
+
+            if password != confirm_password:
+                flash("Oops, passwords don't match. Let's try that again.", 'signup_error')
                 return redirect(url_for('login_signup', form='signup'))
-            else:
-                is_admin = False
-                if User.query.count() == 0:  # First user becomes admin
-                    is_admin = True
-                
-                hashed_password = generate_password_hash(password)
-                new_user = User(
-                    email=email,
-                    password=hashed_password,
-                    username=username,
-                    is_admin=is_admin
-                )
-                db.session.add(new_user)
-                db.session.commit()
-                
-                if is_admin:
-                    login_user(new_user)
-                    session['admin_logged_in'] = True
-                    session['admin_username'] = new_user.username
-                    flash('Admin account created successfully!', 'signup_success')
-                    return redirect(url_for('admin'))  # Redirect to admin dashboard
-                
-                flash('Account created successfully! Please Sign in.', 'signup_success')
-                return redirect(url_for('login_signup', form='signup'))
-                
-        else:  # Login logic
+
+            # Automatically grant admin status to first user
+            this_is_the_first_human = User.query.count() == 0
+            make_admin = True if this_is_the_first_human else False
+
+            hashed_pw = generate_password_hash(password)  # no plaintext passwords on my watch
+            new_kid = User(
+                email=email,
+                password=hashed_pw,
+                username=username or "anonymous_ghost",  # fallback just in case
+                is_admin=make_admin
+            )
+
+            db.session.add(new_kid)
+            db.session.commit()
+
+            if make_admin:
+                login_user(new_kid)
+                session['admin_logged_in'] = True
+                session['admin_username'] = new_kid.username
+                flash("✨ Admin account created! Welcome to the throne.", 'signup_success')
+                return redirect(url_for('admin'))
+
+            flash("Yay! Your account's ready. Now go sign in.", 'signup_success')
+            return redirect(url_for('login_signup', form='signup'))
+
+        else:  # Must be trying to log in
             if user and check_password_hash(user.password, password):
                 login_user(user)
                 if user.is_admin:
                     session['admin_logged_in'] = True
                     session['admin_username'] = user.username
-                    return redirect(url_for('admin'))  # Explicit admin redirect
+                    return redirect(url_for('admin'))  # Our VIP area
+
                 return redirect(url_for('user_dash'))
             else:
-                flash('Wrong Email or Password!', 'login_error')
+                flash("Nope. Wrong email or password. Try again?", 'login_error')
                 return redirect(url_for('login_signup', form='signin'))
 
+    # fallback - just show the page like nothing happened
     return render_template('login_signup.html')
-    
-# @app.route('/admin')
-# # @login_required  # Comment out this line
-# def admin():
-#     # Auto-login logic
-#     if not current_user.is_authenticated:
-#         admin = User.query.filter_by(is_admin=True).first()
-#         if admin:
-#             login_user(admin)
-    
-#     return render_template('admin.html')
 
-#Admin routes
+# --- ADMIN AREA ---
+
 @app.route('/admin')
 @login_required
 def admin():
+    # Guarding the gate — no admin badge, no entry.
     if not current_user.is_admin:
-        flash('You do not have admin privileges', 'error')
+        flash("No sneaky business — you're not an admin!", 'error')
         return redirect(url_for('user_dash'))
+
     return render_template('admin.html')
+
 
 @app.route('/admin_detection')
 @login_required
 def admin_detection():
+    # Just double-checking that we're not letting the wrong folks peek at detections
     if not current_user.is_admin:
-        flash('You do not have admin privileges', 'error')
+        flash("Admin-only territory", 'error')
         return redirect(url_for('user_dash'))
+
     return render_template('admin_detection.html')
 
-# API endpoints for admin pages
+
+# --- USER API (used by Admin Panel maybe?) ---
+
 @app.route('/api/users', methods=['GET', 'POST'])
 def api_users():
     if request.method == 'GET':
-        users = User.query.all()
-        return jsonify([{
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'is_admin': user.is_admin
-        } for user in users])
+        # Return ALL the users — dangerously generous?
+        everyone = User.query.all()
+        return jsonify([
+            {
+                'id': someone.id,
+                'username': someone.username,
+                'email': someone.email,
+                'is_admin': someone.is_admin
+            }
+            for someone in everyone
+        ])
+
     elif request.method == 'POST':
         data = request.get_json()
-        # Validate required fields
+        # Ugh, check for all the boring required fields
         if not data or not data.get('username') or not data.get('email') or not data.get('password'):
-            return jsonify({'error': 'Missing required fields'}), 400
-            
-        # Check if username already exists
+            return jsonify({'error': 'Missing stuff... fill all the fields, please.'}), 400
+
+        # Clash detection
         if User.query.filter_by(username=data['username']).first():
-            return jsonify({'error': 'Username already exists'}), 400
-            
-        # Check if email already exists
+            return jsonify({'error': 'That username’s already taken.'}), 400
+
         if User.query.filter_by(email=data['email']).first():
-            return jsonify({'error': 'Email already exists'}), 400
-            
-        # Create new user
-        hashed_password = generate_password_hash(data['password'])
-        new_user = User(
+            return jsonify({'error': 'Email’s already in use. Maybe log in?' }), 400
+
+        # Cool, let's make the new user
+        hashed = generate_password_hash(data['password'])
+        freshly_born = User(
             username=data['username'],
             email=data['email'],
-            password=hashed_password,
+            password=hashed,
             is_admin=data.get('is_admin', False)
         )
-        db.session.add(new_user)
+        db.session.add(freshly_born)
         db.session.commit()
-        
+
         return jsonify({
-            'message': 'User created successfully',
+            'message': 'New user created',
             'user': {
-                'id': new_user.id,
-                'username': new_user.username,
-                'email': new_user.email,
-                'is_admin': new_user.is_admin
+                'id': freshly_born.id,
+                'username': freshly_born.username,
+                'email': freshly_born.email,
+                'is_admin': freshly_born.is_admin
             }
         }), 201
-    
+
+
 @app.route('/api/users/<int:user_id>', methods=['PUT', 'DELETE'])
 def api_user(user_id):
+    # Find the human
     user = User.query.get_or_404(user_id)
+
     if request.method == 'PUT':
-        data = request.get_json()
-        
-        # Check if username is being changed and validate
-        if 'username' in data and data['username'] != user.username:
-            if User.query.filter(User.username == data['username']).first():
-                return jsonify({'error': 'Username already exists'}), 400
-            user.username = data['username']
-        
-        # Check if email is being changed and validate
-        if 'email' in data and data['email'] != user.email:
-            if User.query.filter(User.email == data['email']).first():
-                return jsonify({'error': 'Email already exists'}), 400
-            user.email = data['email']
-        
-        # Update password if provided
-        if 'password' in data and data['password']:
-            user.password = generate_password_hash(data['password'])
-        
-        # Update admin status
-        if 'is_admin' in data:
-            user.is_admin = data['is_admin']
-            
+        updates = request.get_json()
+
+        # Not a great way to structure this, but hey, it works
+        if 'username' in updates and updates['username'] != user.username:
+            if User.query.filter(User.username == updates['username']).first():
+                return jsonify({'error': 'Username already taken'}), 400
+            user.username = updates['username']
+
+        if 'email' in updates and updates['email'] != user.email:
+            if User.query.filter(User.email == updates['email']).first():
+                return jsonify({'error': 'Email conflict'}), 400
+            user.email = updates['email']
+
+        if 'password' in updates and updates['password']:
+            user.password = generate_password_hash(updates['password'])
+
+        if 'is_admin' in updates:
+            user.is_admin = updates['is_admin']
+
         db.session.commit()
         return jsonify({
-            'message': 'User updated successfully',
+            'message': 'User info updated',
             'user': {
                 'id': user.id,
                 'username': user.username,
@@ -256,177 +278,205 @@ def api_user(user_id):
                 'is_admin': user.is_admin
             }
         })
+
     elif request.method == 'DELETE':
         db.session.delete(user)
         db.session.commit()
-        return jsonify({'message': 'User deleted successfully'})
+        return jsonify({'message': f'User {user_id} deleted'})
+
+# --- BULK DELETE ZONE (Use responsibly!) ---
 
 @app.route('/api/users/delete-multiple', methods=['POST'])
 def api_delete_multiple_users():
-    data = request.get_json()
-    if not data or not data.get('userIds'):
-        return jsonify({'error': 'No user IDs provided'}), 400
-        
+    payload = request.get_json()
+
+    if not payload or not payload.get('userIds'):
+        return jsonify({'error': 'Please provide at least *one* user ID...'}), 400
+
     try:
-        User.query.filter(User.id.in_(data['userIds'])).delete(synchronize_session=False)
+        # Execute user deletion in batch
+        User.query.filter(User.id.in_(payload['userIds'])).delete(synchronize_session=False)
         db.session.commit()
-        return jsonify({'message': f"{len(data['userIds'])} users deleted successfully"})
+        return jsonify({'message': f"{len(payload['userIds'])} users sent to the void."})
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-    
+        return jsonify({'error': f"Oops: {str(e)}"}), 500
+
+
+# --- DETECTION LOG STUFF ---
+
 @app.route('/api/detection-logs', methods=['GET'])
 def api_detection_logs():
+    # Pretty much a "gimme everything" endpoint
     logs = DetectionLog.query.all()
-    return jsonify([{
-        'id': log.id,
-        'user_id': log.user_id,
-        'date': log.date,
-        'time': log.time,
-        'total_count': log.total_count,
-        'used_resource': log.used_resource
-    } for log in logs])
+
+    return jsonify([
+        {
+            'id': entry.id,
+            'user_id': entry.user_id,
+            'date': entry.date,
+            'time': entry.time,
+            'total_count': entry.total_count,
+            'used_resource': entry.used_resource
+        }
+        for entry in logs
+    ])
+
 
 @app.route('/api/detection-logs/<int:log_id>', methods=['DELETE'])
 def api_detection_log(log_id):
+    # Find the crime scene log
     log = DetectionLog.query.get_or_404(log_id)
     db.session.delete(log)
     db.session.commit()
-    return jsonify({'message': 'Log deleted successfully'})
+    return jsonify({'message': f'Detection log {log_id} deleted. Poof!'})
+
 
 @app.route('/api/detection-logs/delete-multiple', methods=['POST'])
 def api_delete_multiple_logs():
     data = request.get_json()
+
     if not data or not data.get('logIds'):
-        return jsonify({'error': 'No log IDs provided'}), 400
-        
+        return jsonify({'error': 'We need some log IDs to delete...'}), 400
+
     try:
         DetectionLog.query.filter(DetectionLog.id.in_(data['logIds'])).delete(synchronize_session=False)
         db.session.commit()
-        return jsonify({'message': f"{len(data['logIds'])} logs deleted successfully"})
-    except Exception as e:
+        return jsonify({'message': f"{len(data['logIds'])} logs wiped off the record."})
+    except Exception as err:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-    
-# Logout route
+        return jsonify({'error': f"Something went sideways: {str(err)}"}), 500
+
+# --- BYE BYE SESSION ---
+
 @app.route('/logout')
 def logout():
     if current_user.is_authenticated:
-        logout_user()
-    session.clear()  # Clear all session data
+        logout_user()  # Peace out
+    session.clear()  # clearing session data, Wipe it all, just to be sure
     return redirect(url_for('login_signup'))
 
-# Detection configuration
-UPLOAD_FOLDER = 'static/uploads'
-AUDIO_FOLDER = 'static/audio' #For Audio
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['AUDIO_FOLDER'] = AUDIO_FOLDER #For Audio
 
+# --- SOME STATIC FILE SETUP STUFF ---
+
+UPLOAD_FOLDER = 'static/uploads'
+AUDIO_FOLDER = 'static/audio'  # Define audio folder for alerts
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['AUDIO_FOLDER'] = AUDIO_FOLDER
+
+# Check if folders exist; if not, Create required directories if not present
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
-if not os.path.exists(AUDIO_FOLDER):  #For Audio
+
+if not os.path.exists(AUDIO_FOLDER):
     os.makedirs(AUDIO_FOLDER)
 
-# Global variables for people count and control signals
+
+# --- GLOBAL-ish VARS ---
 people_count = 0
 max_people_count = 0
 stop_feed = False
+heatmap_data = []  #Temporary storage for tracking detection points
 
-# Initialize YOLO model
+
+# --- GETTING YOLO TO WAKE UP ---
+
 def initialize_yolo():
     try:
-        # Initialize torch settings
         if torch.cuda.is_available():
             cudnn.enabled = True
             cudnn.benchmark = True
             torch.set_flush_denormal(True)
-        
-        # Load model with error handling
+
         model_path = "yolov8n.pt"
         if not os.path.exists(model_path):
-            raise FileNotFoundError(f"Model file not found at {model_path}")
-            
-        model = YOLO(model_path)
-        model.fuse()  # Optimize model
-        return model
-        
-    except Exception as e:
-        print(f"YOLO initialization failed: {str(e)}")
-        return None
-    
-heatmap_data = []
+            raise FileNotFoundError(f" Model missing at {model_path} — Raise error if model file is missing")
 
-# I Modified detect_people function to store coordinates
+        model = YOLO(model_path)
+        model.fuse()  # Fuse layers to optimize model performance
+        return model
+    except Exception as err:
+        print(f"[YOLO failed to launch] {str(err)}")
+        return None
+
+
+# --- ACTUAL DETECTION ENGINE ---
+
 def detect_people(frame, model):
     global people_count, heatmap_data
+
+    if frame is None or model is None:
+        print("Skip detection if input is invalid")
+        return [], []
+
     try:
-        if frame is None or model is None:
-            print("Invalid frame or model")
-            return [], []
-            
         results = model(frame, stream=True, verbose=False)
         bounding_boxes = []
         confidences = []
-        current_frame_data = []
-        
+        temp_heatpoints = []
+
         for result in results:
             boxes = result.boxes.cpu().numpy()
+
             for box in boxes:
-                cls_id = box.cls.item() if hasattr(box.cls, 'item') else int(box.cls)
-                conf = box.conf.item() if hasattr(box.conf, 'item') else float(box.conf)
-                if cls_id == 0 and conf > 0.4:  # Class 0 is person
+                class_id = int(box.cls) if not hasattr(box.cls, 'item') else box.cls.item()
+                confidence = float(box.conf) if not hasattr(box.conf, 'item') else box.conf.item()
+
+                if class_id == 0 and confidence > 0.4:
                     x1, y1, x2, y2 = box.xyxy[0].astype(int)
-                    bounding_boxes.append([x1, y1, x2-x1, y2-y1])
-                    confidences.append(conf)
-                    
-                    # Store center point of each detection with integer values
-                    center_x = int((x1 + x2) // 2)
-                    center_y = int((y1 + y2) // 2)
-                    current_frame_data.append((center_x, center_y))
-        
+                    bounding_boxes.append([x1, y1, x2 - x1, y2 - y1])
+                    confidences.append(confidence)
+
+                    mid_x = int((x1 + x2) / 2)
+                    mid_y = int((y1 + y2) / 2)
+                    temp_heatpoints.append((mid_x, mid_y))
+
         people_count = len(bounding_boxes)
-        
-        # Store this frame's data only if people were detected
-        if current_frame_data:
-            heatmap_data.append(current_frame_data)
-            # Keep only the last 10 frames of heatmap data
-            heatmap_data = heatmap_data[-10:]  
-            
+
+        if temp_heatpoints:
+            heatmap_data.append(temp_heatpoints)
+            # Retain only recent heatmap frames (last 10)
+            heatmap_data = heatmap_data[-10:]
+
         return bounding_boxes, confidences
-    
+
     except Exception as e:
-        print(f"Detection error: {str(e)}")
+        print(f"[ERROR in detect_people]: {e}")
         return [], []
+
+
+# --- GIVE ME THAT HEATMAP DATA ---
 
 @app.route('/heatmap_data')
 def get_heatmap_data():
-    global heatmap_data
     try:
-        all_points = []
+        points = []
         for frame in heatmap_data:
-            for x, y in frame:
-                all_points.append({
-                    'x': int(x),  
-                    'y': int(y),
-                    'frame_width': 640,
+            for (x, y) in frame:
+                points.append({
+                    'x': x,
+                    'y': y,
+                    'frame_width': 640,   # Static frame resolution values
                     'frame_height': 480
                 })
-        return jsonify(all_points)
-    except Exception as e:
-        app.logger.error(f"Error in heatmap_data: {str(e)}")
-        return jsonify([]), 200  # Return empty array instead of error
+        return jsonify(points)
+    except Exception as err:
+        app.logger.error(f"Heatmap error: {str(err)}")
+        return jsonify([]), 200  # Send empty response if heatmap data is unavailable
 
-# Generate video frames with detection
+# --- LIVE VIDEO STREAMIN', BABY ---
+
 def generate_frames(video_source=None):
     global stop_feed, max_people_count
-    
-    # Use a more robust temporary file handling
+
     import tempfile
     import sys
     from contextlib import contextmanager
-    
+
     @contextmanager
     def suppress_stderr():
+        # Suppress unnecessary OpenCV warnings
         original_stderr = sys.stderr
         try:
             with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
@@ -436,90 +486,106 @@ def generate_frames(video_source=None):
             sys.stderr = original_stderr
             try:
                 if os.path.exists(f.name):
-                    os.unlink(f.name)  # More reliable than remove on Windows
+                    os.unlink(f.name)
             except:
-                pass  # Ignore any cleanup errors
+                pass  # It's fine. It's all fine.
 
     with suppress_stderr():
         model = initialize_yolo()
         if model is None:
-            print("Failed to initialize YOLO model")
+            print("No YOLO? No show.")
             return
-        
+
         try:
-            # If no specific source was set, try default sources
             if video_source is None:
-                video_sources = [1, 0]  # Default camera indices
+                # Cycle through default cams till we hit jackpot
+                cams_to_try = [1, 0]  # Yep, in that order
                 cap = None
-                for source in video_sources:
-                    cap = cv2.VideoCapture(source)
+                for cam in cams_to_try:
+                    cap = cv2.VideoCapture(cam)
                     if cap.isOpened():
-                        print(f"Using video source: {source}")
+                        print(f"Found a working webcam on source {cam}")
                         break
                     cap.release()
             else:
-                # Use the provided video source (IP camera)
+                # Oh, you fancy with an IP cam?
+                print(f"Trying IP feed: {video_source}")
                 cap = cv2.VideoCapture(video_source)
-                print(f"Using IP camera: {video_source}")
 
             if not cap or not cap.isOpened():
-                print("No valid camera source found.")
+                print("Can't open video. No bueno.")
                 return
 
-            try:
-                while not stop_feed:
-                    success, frame = cap.read()
-                    if not success:
-                        break
-                    
-                    boxes, confidences = detect_people(frame, model)
-                    max_people_count = max(max_people_count, people_count)
-                   
-                    for i, (x, y, w, h) in enumerate(boxes):
-                        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                        cv2.putText(frame, f"Person {confidences[i]:.2f}", 
-                                   (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+            while not stop_feed:
+                success, frame = cap.read()
+                if not success:
+                    break
 
-                    ret, buffer = cv2.imencode('.jpg', frame)
-                    yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
-                    
-            except GeneratorExit:
-                # Handle graceful shutdown when client disconnects
-                pass
-                
-            finally:
+                boxes, confidences = detect_people(frame, model)
+                max_people_count = max(max_people_count, people_count)
+
+                # Slap those rectangles on people
+                for i, (x, y, w, h) in enumerate(boxes):
+                    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                    label = f"Person {confidences[i]:.2f}"  # Because context is everything
+                    cv2.putText(frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX,
+                                0.4, (0, 255, 0), 2)
+
+                # Turn it into a JPEG before shipping it to the browser
+                ret, buffer = cv2.imencode('.jpg', frame)
+                if not ret:
+                    continue
+
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' +
+                       buffer.tobytes() + b'\r\n')
+
+        except GeneratorExit:
+            # Client bailed — no worries
+            pass
+
+        except Exception as crash:
+            print(f"💥 Something exploded during video processing: {crash}")
+
+        finally:
+            if cap:
                 cap.release()
-                
-        except Exception as e:
-            print(f"Video processing error: {str(e)}")
 
-# Handle image upload
+# --- HANDLE IMAGE UPLOADS (BECAUSE BUTTONS NEED TO DO SOMETHING) ---
+
 @app.route('/upload_image', methods=['POST'])
 @login_required
 def upload_image():
     global stop_feed
-    stop_feed = True
-    image = request.files['image']
-    if image:
-        image_path = os.path.join(app.config['UPLOAD_FOLDER'], image.filename)
-        image.save(image_path)
-        return redirect(url_for('display_image', image_path=image_path))
+    stop_feed = True  # Pause the stream if it was running
+
+    uploaded_img = request.files.get('image')
+
+    if uploaded_img:
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], uploaded_img.filename)
+        uploaded_img.save(file_path)
+        return redirect(url_for('display_image', image_path=file_path))
+
+    flash("No image uploaded... were you trying to trick me?", "error")
     return redirect(url_for('user_dash'))
 
-# Display image with detection
+
 @app.route('/display_image')
 @login_required
 def display_image():
     image_path = request.args.get('image_path')
     frame = cv2.imread(image_path)
+
     model = initialize_yolo()
     boxes, confidences = detect_people(frame, model)
-    
+
     for i, box in enumerate(boxes):
         x, y, w, h = box
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        cv2.putText(frame, f"Person {confidences[i]:.2f}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-    
+        label = f"Person {confidences[i]:.2f}"
+        cv2.putText(frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+
+    # Save the altered image right back to where it came from (not great, but... works)
     cv2.imwrite(image_path, frame)
 
     if current_user.is_authenticated:
@@ -533,75 +599,84 @@ def display_image():
         db.session.add(log)
         db.session.commit()
 
-    image_paths = image_path.split('/')
-    for p in image_paths:
+    # Normalize slashes so it doesn’t break on Windows
+    parts = image_path.split('/')
+    for p in parts:
         if "\\" in p:
-            image_paths.remove(p)
-            image_paths = image_paths + p.split('\\')
-    
-    return render_template('detect.html', 
-        image_path='/'.join(image_paths), 
-        people_count=people_count,
-        is_static=True
-    )
+            parts.remove(p)
+            parts += p.split('\\')
 
-# Handle video upload
+    return render_template('detect.html',
+        image_path='/'.join(parts),
+        people_count=people_count,
+        is_static=True)
+
+
+# --- HANDLE VIDEO UPLOADS TOO ---
+
 @app.route('/upload_video', methods=['POST'])
 @login_required
 def upload_video():
     global stop_feed
     stop_feed = True
-    video = request.files['video']
-    if video:
-        video_path = os.path.join(app.config['UPLOAD_FOLDER'], video.filename)
-        video.save(video_path)
-        return redirect(url_for('display_video', video_filename=video.filename))
+
+    vid = request.files.get('video')
+
+    if vid:
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], vid.filename)
+        vid.save(file_path)
+        return redirect(url_for('display_video', video_filename=vid.filename))
+
+    flash("Video not found in form data. Please check again.", "error")
     return redirect(url_for('user_dash'))
 
-# Display video with detection
+
 @app.route('/display_video')
 @login_required
 def display_video():
-    video_filename = request.args.get('video_filename')
-    processed_video_filename = 'processed_' + video_filename
-    input_video_path = os.path.join(app.config['UPLOAD_FOLDER'], video_filename)
-    cap = cv2.VideoCapture(input_video_path)
-    
+    filename = request.args.get('video_filename')
+    processed_name = 'processed_' + filename
+    input_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+    cap = cv2.VideoCapture(input_path)
+
     if not cap.isOpened():
-        return "Error: Could not open video file"
-    
-    frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        return "Error: Could not open that video file"
+
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = int(cap.get(cv2.CAP_PROP_FPS))
-    output_video_path = os.path.join(app.config['UPLOAD_FOLDER'], processed_video_filename)
-    fourcc = cv2.VideoWriter_fourcc(*'avc1')
-    out = cv2.VideoWriter(output_video_path, fourcc, fps, (frame_width, frame_height))
-    
+    output_path = os.path.join(app.config['UPLOAD_FOLDER'], processed_name)
+    fourcc = cv2.VideoWriter_fourcc(*'avc1')  # you could change this, but AVC is chill
+
+    out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+
     model = initialize_yolo()
     max_count = 0
-    frame_count = 0
+    frame_number = 0
     last_boxes = []
     last_confidences = []
-    
+
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             break
 
-        frame_count += 1
-        if frame_count % 3 == 0:
-            boxes, confidences = detect_people(frame, model)
-            max_count = max(max_count, len(boxes))
-            last_boxes = boxes
-            last_confidences = confidences
-        
+        frame_number += 1
+
+        # Let's not process every single frame because... CPU says no
+        if frame_number % 3 == 0:
+            last_boxes, last_confidences = detect_people(frame, model)
+            max_count = max(max_count, len(last_boxes))
+
         for i, box in enumerate(last_boxes):
             x, y, w, h = box
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            cv2.putText(frame, f"Person {last_confidences[i]:.2f}", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-        
+            cv2.putText(frame, f"Person {last_confidences[i]:.2f}", (x, y - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+
         out.write(frame)
-    
+
     cap.release()
     out.release()
 
@@ -616,28 +691,31 @@ def display_video():
         db.session.add(log)
         db.session.commit()
 
-    processed_video_path = os.path.join(app.config['UPLOAD_FOLDER'], processed_video_filename)
-    processed_paths = processed_video_path.split('/')
-    for p in processed_paths:
-        if "\\" in p:
-            processed_paths.remove(p)
-            processed_paths = processed_paths + p.split('\\')
-    
-    return render_template('detect.html', 
-        video_path='/'.join(processed_paths),
-        people_count=max_count,
-        is_static=True
-    )
+    # Normalize paths like a Windows therapist
+    path_parts = output_path.split('/')
+    for part in path_parts:
+        if "\\" in part:
+            path_parts.remove(part)
+            path_parts += part.split('\\')
 
-# User Dashboard route
+    return render_template('detect.html',
+                           video_path='/'.join(path_parts),
+                           people_count=max_count,
+                           is_static=True)
+
+# --- USER STUFF ---
+
 @app.route('/user_dash')
 @login_required
 def user_dash():
     global stop_feed
-    stop_feed = False
+    stop_feed = False  # let the video flow
+
+    # This might be a leftover from a dream of multiple resource types
     resource_type = request.form.get('resource_type')
     session['used_resource'] = resource_type
     return render_template('user_dash.html')
+
 
 @app.route('/user_profile', methods=['GET', 'POST'])
 @login_required
@@ -645,44 +723,47 @@ def user_profile():
     if request.method == 'POST':
         username = request.form.get('username')
         email = request.form.get('email')
-        current_password = request.form.get('current_password')
-        new_password = request.form.get('new_password')
-        confirm_password = request.form.get('confirm_password')
-        
+        current_pw = request.form.get('current_password')
+        new_pw = request.form.get('new_password')
+        confirm_pw = request.form.get('confirm_password')
+
         user = User.query.get(current_user.id)
-        
+
+        # Change username if needed
         if username and username != user.username:
-            existing_user = User.query.filter_by(username=username).first()
-            if existing_user and existing_user.id != current_user.id:
-                flash('Username already exists!', 'error')
+            if User.query.filter_by(username=username).first():
+                flash("Sorry, someone already snagged that username.", "error")
             else:
                 user.username = username
-                flash('Username updated successfully!', 'success')
-        
+                flash("Username updated successfully", "success")
+
+        # Same for email
         if email and email != user.email:
-            existing_user = User.query.filter_by(email=email).first()
-            if existing_user and existing_user.id != current_user.id:
-                flash('Email already exists!', 'error')
+            if User.query.filter_by(email=email).first():
+                flash("Email's taken. Try logging in maybe?", "error")
             else:
                 user.email = email
-                flash('Email updated successfully!', 'success')
-        
-        if current_password and new_password and confirm_password:
-            if check_password_hash(user.password, current_password):
-                if new_password == confirm_password:
-                    user.password = generate_password_hash(new_password)
-                    flash('Password updated successfully!', 'success')
+                flash("Email updated", "success")
+
+        # Password change logic that gets more complex the longer you stare at it
+        if current_pw and new_pw and confirm_pw:
+            if check_password_hash(user.password, current_pw):
+                if new_pw == confirm_pw:
+                    user.password = generate_password_hash(new_pw)
+                    flash("New password set successfully. You're now more secure", "success")
                 else:
-                    flash('New passwords do not match!', 'error')
+                    flash("New passwords didn't match. Ugh.", "error")
             else:
-                flash('Current password is incorrect!', 'error')
-        
+                flash("Wrong current password. Nice try though.", "error")
+
         db.session.commit()
         return redirect(url_for('user_profile'))
-    
+
     return render_template('user_profile.html', user=current_user)
 
-# Detection route
+
+# --- DETECTION TRIGGER ZONE ---
+
 @app.route('/detect', methods=['GET', 'POST'])
 @login_required
 def detect():
@@ -692,131 +773,158 @@ def detect():
     stop_feed = False
 
     if request.method == 'POST':
-        resource_type = request.form.get('resource_type')
-        session['used_resource'] = resource_type
+        res_type = request.form.get('resource_type')
+        session['used_resource'] = res_type
 
-        if resource_type == 'ip_camera':
+        if res_type == 'ip_camera':
             ip_address = request.form.get('ip_address')
-            # Formatting the IP address into a proper RTSP URL
-            rtsp_url = f"rtsp://{ip_address}:554/stream1"  # Adjust this based on your camera's RTSP URL format
+            rtsp_url = f"rtsp://{ip_address}:554/stream1"  # This may need tweaking for different cams
             stop_feed = False
             socketio.start_background_task(background_people_count)
             return render_template('detect.html', resource_type='live', people_count=people_count, video_source=rtsp_url)
 
-    resource_type = request.form.get('resource_type')
-    if resource_type == 'live':
+    # If we didn’t catch POST, fallback to a GET-style flow
+    fallback_type = request.form.get('resource_type')
+
+    if fallback_type == 'live':
         stop_feed = False
         socketio.start_background_task(background_people_count)
         return render_template('detect.html', resource_type='live', people_count=people_count)
-    elif resource_type == 'image':
+    elif fallback_type == 'image':
         return redirect(url_for('upload_image'))
-    elif resource_type == 'video':
+    elif fallback_type == 'video':
         return redirect(url_for('upload_video'))
 
+    # Just default to the live setup if all else fails
     people_count = 0
     stop_feed = False
     socketio.start_background_task(background_people_count)
     return render_template('detect.html', is_static=False)
 
+# --- AUDIO CHECK, just in case someone asks "why no beep?" ---
+
 @app.route('/check_audio')
 def check_audio():
     audio_path = os.path.join(app.config['AUDIO_FOLDER'], 'alert.mp3')
-    if os.path.exists(audio_path):
-        return f"Audio file exists at {audio_path}"
-    else:
-        return f"Audio file not found at {audio_path}"
 
-# Video feed route
+    if os.path.exists(audio_path):
+        return f"audio is present {audio_path}"
+    else:
+        return f"No alert.mp3 found at {audio_path}"
+
+
+# --- VIDEO FEED WRANGLER ---
+
 @app.route('/video_feed')
 def video_feed():
-    video_source = request.args.get('source')
-    if video_source == 'None':
-        video_source = None
-    return Response(generate_frames(video_source), mimetype='multipart/x-mixed-replace; boundary=frame')
+    vid_src = request.args.get('source')
+    if vid_src == 'None':
+        vid_src = None
+    return Response(generate_frames(vid_src),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
 
-# Stop feed route
+
+# --- STOP! and return to userdashboard ---
+
 @app.route('/stop_feed', methods=['POST'])
 @login_required
 def stop_feed_func():
     global stop_feed, people_count, max_people_count, heatmap_data
+
     stop_feed = True
-    heatmap_data = []  # Clear heatmap data when feed stops
-    socketio.emit('feed_stopped')
+    heatmap_data = []  # Clear heatmap data for the next session
+    socketio.emit('feed_stopped')  # Notify client-side that feed has stopped
 
     import time
-    time.sleep(0.5)  # Allow 500ms for cleanup
+    time.sleep(0.5)  # Brief pause to allow event propagation
 
-    used_resource = session.get('used_resource', 'Live Feed')
-    if used_resource == 'live':
-        used_resource = 'Live-Feed'
+    used = session.get('used_resource', 'Live Feed')
+    if used == 'live':
+        used = 'Live-Feed'  # we will need to use conssitent names while cleaning
 
     if current_user.is_authenticated:
         log = DetectionLog(
             date=datetime.now().strftime("%Y-%m-%d"),
             time=datetime.now().strftime("%H:%M:%S"),
-            used_resource=used_resource,
+            used_resource=used,
             total_count=max_people_count,
             user_id=current_user.id
         )
         db.session.add(log)
         db.session.commit()
-    
+
+    # Reset so things start clean next time
     people_count = 0
     max_people_count = 0
     return redirect(url_for('user_dash'))
 
-# Background task for people count
+
+# --- BACKGROUND WORKER THAT JUST SHOUTS NUMBERS ---
+
 def background_people_count():
     global stop_feed
     while not stop_feed:
-        socketio.emit('people_count', {'count': people_count })
-        socketio.sleep(1)
+        socketio.emit('people_count', {'count': people_count})
+        socketio.sleep(1)  # Regulate socket emission frequency
 
-# User count route
+
+# --- USER'S PERSONAL DETECTION LOG PAGE ---
+
 @app.route('/user_count')
 @login_required
 def user_count():
     logs = DetectionLog.query.filter_by(user_id=current_user.id).all()
     return render_template('user_count.html', logs=logs)
 
-# Delete log route
+
+# --- Delete a specific log entry from the database ---
+
 @app.route('/delete_log/<int:log_id>')
 @login_required
 def delete_log(log_id):
-    db.session.execute('PRAGMA foreign_keys = OFF;')
+    db.session.execute('PRAGMA foreign_keys = OFF;')  # Temporarily disable foreign key checks for deletion, cus it's stopping me from deleting
     try:
         log = DetectionLog.query.get(log_id)
         if log:
             db.session.delete(log)
             db.session.commit()
-    except Exception as e:
+    except Exception as oops:
         db.session.rollback()
-        flash(f"Error deleting record: {e}", 'error')
+        flash(f"Couldn't delete the log: {oops}", "error")
     finally:
-        db.session.execute('PRAGMA foreign_keys = ON;')
+        db.session.execute('PRAGMA foreign_keys = ON;')  # Re-enable foreign key constraints after operation
         db.session.commit()
         reset_auto_increment()
+
     return redirect(url_for('user_count'))
+
+
+# --- ADMIN INSURANCE POLICY ---
 
 def ensure_admin_exists():
     with app.app_context():
-        if User.query.count() == 0:  # If no users exist
-            admin = User(
+        if User.query.count() == 0:
+            # Initialize system with a default admin if no users exist
+            root_admin = User(
                 username='admin',
                 email='admin@example.com',
                 password=generate_password_hash('admin123'),
                 is_admin=True
             )
-            db.session.add(admin)
+            db.session.add(root_admin)
             db.session.commit()
 
-# Initialize database
+
+# --- THE GRAND FINALE ---
+
 if __name__ == '__main__':
-    # Suppress all warnings
+    # Turn off all warnings. If we can’t see them, they can’t hurt us.
     import warnings
     warnings.filterwarnings("ignore")
 
     with app.app_context():
         db.create_all()
         ensure_admin_exists()
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+
+    # Let the socket party begin
+    socketio.run(app, debug=True)
