@@ -128,10 +128,8 @@
             form.submit();
         }
     
-        // Get admin username from server session
         document.getElementById('admin-username').textContent = "{{ current_user.username }}";
     
-        // Show Alerts 
         function showAlert(message, className) {
             const div = document.createElement("div");
             div.className = `alert alert-${className}`;
@@ -141,7 +139,6 @@
             setTimeout(() => div.remove(), 3000);
         }
     
-        // Load logs from API
         async function loadLogs() {
             try {
                 const response = await fetch('/api/detection-logs');
@@ -173,14 +170,12 @@
             }
         }
     
-        // Handle Select All checkbox
         document.getElementById('selectAllLogs').addEventListener('change', function() {
             document.querySelectorAll('.log-select-checkbox').forEach(checkbox => {
                 checkbox.checked = this.checked;
             });
         });
     
-        // Handle Delete Selected button
         document.getElementById('deleteSelectedLogs').addEventListener('click', async function() {
             const selected = Array.from(document.querySelectorAll('.log-select-checkbox:checked'))
                 .map(checkbox => checkbox.closest('tr').dataset.logId);
@@ -211,7 +206,6 @@
             }
         });
     
-        // Handle individual log deletion
         document.querySelector("#logs-list").addEventListener("click", async (e) => {
             if (e.target.classList.contains("delete")) {
                 const row = e.target.closest('tr');
@@ -235,7 +229,6 @@
             }
         });
     
-        // Load initial data
         document.addEventListener('DOMContentLoaded', loadLogs);
     </script>
 
