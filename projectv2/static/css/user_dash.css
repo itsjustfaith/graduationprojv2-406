@@ -4,14 +4,14 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: "Raleway", sans-serif; /* Correct font applied globally */
+    font-family: "Raleway", sans-serif; 
 }
 
 body {
     width: 100%;
     background: #e5e7eb;
     position: relative;
-    font-family: "Raleway", sans-serif; /* This line is redundant since the font is already set globally */
+    font-family: "Raleway", sans-serif; 
     display:flex;
     background-color: #faf1fd;
 }
@@ -30,7 +30,7 @@ body {
 #menu .logo {
     display: flex;
     align-items: center;
-    color: #fff; /* Fixed color to white */
+    color: #fff; 
     padding: 30px 0 0 30px;
     border-bottom: 3px solid #fff;
     height: 73px;
@@ -51,7 +51,7 @@ body {
 }
 
 
-#menu .items { /* Fixed selector for ".items" */
+#menu .items {
     margin-top: 40px;
 }
 
@@ -187,7 +187,6 @@ span{
 }
 
 @media (max-width: 1024px) {
-  /* Hide sidebar and make it a topbar */
   #menu {
       width: 100%;
       height: 60px;
@@ -211,7 +210,7 @@ span{
   }
 
   #menu .items {
-      display: none; /* Hide menu items by default */
+      display: none; 
       flex-direction: column;
       background: #0c1e3b;
       position: absolute;
@@ -221,7 +220,7 @@ span{
   }
 
   #menu .items.active {
-      display: flex; /* Show menu when active */
+      display: flex;
   }
 
   #menu .items li {
@@ -230,7 +229,6 @@ span{
       border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   }
 
-  /* Hamburger menu */
   .menu-toggle {
       display: block;
       font-size: 24px;
@@ -245,10 +243,9 @@ span{
     cursor: pointer;
 }
 
-/* Adjust main content */
 #interface {
-    margin-left: 0; /* Remove left margin */
-    margin-top: 60px; /* Push content down */
+    margin-left: 0; 
+    margin-top: 60px; 
 }
 }
 
@@ -260,16 +257,11 @@ span{
 
 
 
-/* 
----------------------------------------------
-features
---------------------------------------------- 
-*/
 
 .container{
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px; /* Adjust space between the cards */
+    gap: 20px; /* i adjusted the space */
     padding: 10px;
     margin: auto;
 }
@@ -297,7 +289,7 @@ features
     transition:0.5s;
   
     padding-top: 35px;
-    box-shadow: 0px 0px 20px 0px  rgba(21, 21, 126, 0.205); /* More prominent shadow on hover */
+    box-shadow: 0px 0px 20px 0px  rgba(21, 21, 126, 0.205); 
   }
   
   .features-small-item:hover .icon {
@@ -371,20 +363,16 @@ features
   /* Responsive Design */
 @media (max-width: 1024px) {
     .container {
-        grid-template-columns: repeat(2, 1fr); /* 2 columns for medium screens (tablets) */
+        grid-template-columns: repeat(2, 1fr); 
     }
 }
 
 @media (max-width: 768px) {
     .container {
-        grid-template-columns: 1fr; /* 1 column for small screens (mobile) */
+        grid-template-columns: 1fr; 
     }
 }
-  /* 
-  ---------------------------------------------
-  parallax & home seperator
-  --------------------------------------------- 
-  */
+ 
   .mini {
     min-height: 215px;
     overflow: hidden;
@@ -652,7 +640,6 @@ features
   
 
 
-  /* Edit profile*/
 
   .profile-section i{
     display: block;
@@ -695,9 +682,9 @@ features
 }
 .form-group .icons {
     position: absolute;
-    right: 10px; /* Adjust the right position to align the icon within the input field */
-    top:70%; /* Center the icon vertically */
-    transform: translateY(-50%); /* Adjust for vertical centering */
+    right: 10px; 
+    top:70%;
+    transform: translateY(-50%); 
     color: #ba1ec8;
     font-size: 20px;
     cursor: pointer;
@@ -707,9 +694,6 @@ features
     position: relative;
 }
  
-
-/* fix th eye on profile icon*/
-
 
 
 /* USER_COUNT PAGE*/
@@ -840,13 +824,12 @@ tr{
     min-width: 15rem;
    }
     table {
-    width: max-content; /* Prevents table shrink */
+    width: max-content; 
   }
 }
 
-/* Add these styles to your user_dash.css */
 
-/* Loading Overlay for Redirect */
+
 .loading-overlay {
   position: fixed;
   top: 0;
@@ -896,13 +879,11 @@ tr{
   100% { opacity: 0.5; }
 }
 
-/* IP Camera */
 .profile {
-      margin-left: auto; /* Push the profile section to the right */
+      margin-left: auto; 
       display: flex;
       align-items: center;
-      gap: 5px; /* Add spacing between the icon and text */
-}
+      gap: 5px; }
 
  
  
@@ -915,7 +896,7 @@ h3{
 
 .entry{
   width: 100%;
-  max-width: 400px; /* Ensure responsiveness */
+  max-width: 400px; 
   position: relative;
   height: 80px;
   line-height: 80px;
@@ -985,7 +966,7 @@ h3{
   justify-content: center;
   align-items: center;
   flex-direction: column;
-  min-height: 40vh; /* Center the input form vertically */
+  min-height: 40vh; /* nada please make it responsive*/
 }
 
 .ip-container h3{
@@ -995,36 +976,35 @@ h3{
 
 @media (max-width: 768px) {
   .ip-container {
-    padding: 10px; /* Adjust padding for smaller screens */
+    padding: 10px; 
   }
 
   .entry {
-    max-width: 90%; /* Adjust width for responsiveness */
+    max-width: 90%; 
   }
 
   .input {
-    font-size: 1em; /* Adjust font size for smaller screens */
-    line-height: 40px; /* Adjust line height for smaller screens */
+    font-size: 1em; 
+    line-height: 40px; 
   }
 
   .button-input {
-    font-size: 1em; /* Adjust button font size */
-    line-height: 40px; /* Adjust button line height */
+    font-size: 1em; 
+    line-height: 40px; 
   }
 }
 
 @media (max-width: 480px) {
     .ip-container h3 {
-      font-size: 1.2em; /* Adjust heading size for very small screens */
+      font-size: 1.2em; 
     }
 
     .entry {
-      flex-direction: column; /* Stack input and button vertically */
-      align-items: stretch; /* Ensure full width alignment */
-    }
+      flex-direction: column; 
+      align-items: stretch; 
 
     .button-input {
-      margin-top: 10px; /* Add spacing between input and button */
+      margin-top: 10px;
+}
     }
 }
- 

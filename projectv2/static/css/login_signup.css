@@ -5,10 +5,10 @@
     font-family: 'Poppins', sans-serif;
 }
 .logo {
-    position: absolute;  /* Position relative to the nearest positioned ancestor */
-    top: 10px;  /* Adjust as needed for vertical spacing */
-    left: 10px;  /* Adjust as needed for horizontal spacing */
-    width: 150px;  /* Adjust the width as needed */
+    position: absolute;  
+    top: 10px;  
+    left: 10px;  
+    width: 150px;  
     height: auto;  
   }
 body {

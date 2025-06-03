@@ -11,7 +11,6 @@ body {
     font-family: 'Raleway', sans-serif;
 }
 
-/* Display Container */
 .display-container {
     position: relative;
     display: flex;
@@ -23,7 +22,6 @@ body {
     overflow: hidden;
 }
 
-/* Media Display (Always Visible) */
 .media-display {
     position: relative;
     width: 100%;
@@ -38,7 +36,6 @@ body {
     background-color: #000;
 }
 
-/* Loader (Centered in the Display) */
 #screen-loader {
     position: absolute;
     top: 40%;
@@ -59,7 +56,6 @@ body {
 }
 
 
-/* Glass Effect */
 .glass {
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
@@ -72,7 +68,6 @@ body {
     text-align: center;
 }
 
-/* Content Wrapper */
 .content-wrapper {
     display: flex;
     flex-direction: column;
@@ -80,7 +75,6 @@ body {
     justify-content: center;
 }
 
-/* Scanning Title */
 .scanning-title {
     margin-top: -20px;
     font-size: 24px;
