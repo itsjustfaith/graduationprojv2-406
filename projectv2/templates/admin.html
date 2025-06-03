@@ -60,7 +60,6 @@
         </ul>
     </section>
 
-    <!-- Main Content -->
     <section id="interface">
         <div class="navigation">
            
@@ -134,7 +133,6 @@
                         </thead>
         
                         <tbody id="user-list">
-                            <!-- User data will be loaded here -->
                         </tbody>
                     </table>
                 </section>
@@ -174,10 +172,8 @@
             form.submit();
         }
 
-        // Get admin username from server session
         document.getElementById('admin-username').textContent = "{{ current_user.username }}";
     
-        // Show Alerts 
         function showAlert(message, className) {
             const div = document.createElement("div");
             div.className = `alert alert-${className}`;
@@ -187,7 +183,6 @@
             setTimeout(() => div.remove(), 3000);
         }
     
-        // Load users from API
         async function loadUsers() {
             try {
                 const response = await fetch('/api/users');
@@ -220,7 +215,6 @@
             }
         }
 
-        // Handle form submission
         document.querySelector("#user-form").addEventListener("submit", async (e) => {
             e.preventDefault();
             
@@ -239,14 +233,12 @@
             try {
                 let response;
                 if (isEditing) {
-                    // Update existing user
                     const data = {
                         username,
                         email,
                         is_admin: isAdmin
                     };
                     
-                    // Only include password if it was provided
                     if (password) {
                         data.password = password;
                     }
@@ -259,7 +251,6 @@
                         body: JSON.stringify(data)
                     });
                 } else {
-                    // Create new user
                     response = await fetch('/api/users', {
                         method: 'POST',
                         headers: {
@@ -288,7 +279,6 @@
             }
         });
 
-        // Handle user edits and deletes
         document.querySelector("#user-list").addEventListener("click", async (e) => {
             const row = e.target.closest('tr');
             if (!row) return;
@@ -296,7 +286,6 @@
             const userId = row.dataset.userId;
             
             if (e.target.classList.contains("edit")) {
-                // Populate form for editing
                 document.querySelector("#Userid").value = row.cells[1].textContent;
                 document.querySelector("#Username").value = row.cells[2].textContent;
                 document.querySelector("#Email").value = row.cells[3].textContent;
@@ -324,14 +313,12 @@
             }
         });
 
-        // Handle Select All checkbox
         document.getElementById('selectAllUsers').addEventListener('change', function() {
             document.querySelectorAll('.user-select-checkbox').forEach(checkbox => {
                 checkbox.checked = this.checked;
             });
         });
 
-        // Handle Delete Selected button
         document.getElementById('deleteSelectedUsers').addEventListener('click', async function() {
             const selected = Array.from(document.querySelectorAll('.user-select-checkbox:checked'))
                 .map(checkbox => checkbox.closest('tr').dataset.userId);
@@ -362,7 +349,6 @@
             }
         });
 
-        // Clear form fields
         function clearFields() {
             document.querySelector("#Userid").value = "";
             document.querySelector("#Username").value = "";
@@ -373,7 +359,6 @@
             document.querySelectorAll('tr.editing').forEach(r => r.classList.remove('editing'));
         }
 
-        // Load initial data
         document.addEventListener('DOMContentLoaded', loadUsers);
     </script>
 

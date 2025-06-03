@@ -21,7 +21,7 @@
 </head>
 
 <body>
-
+<!--completed by faith (added navigation to start this template)--->
     <section id="menu">
         <div class="logo">
             <h1><a href="">deNco</a></h1>
@@ -41,7 +41,7 @@
         </ul>
     </section>
 
-    <!-- Main Content -->
+    <!-- addition of user profile ui , reference our figma designs for design specs -->
     <section id="interface">
         <div class="navigation">
            
@@ -68,7 +68,7 @@
                         <label for="email">Email</label>
                         <input type="email" id="email" name="email" class="form-control" value="{{ current_user.email }}" placeholder="Email *" disabled>
                     </div>
-                    
+                    <!---- i have done the eye icon, should be working now , please recheck (faith)-->
                     <div class="form-group">
                         <div class="icons">
                             <i class="fa-regular fa-eye" id="togglePassword"></i>
@@ -95,6 +95,8 @@
                         <label for="confirmPassword">Confirm Password</label>
                         <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm Password *">
                     </div>
+
+                    <!---3 buttons added like discussed in meeting-->
                     <button type="button" id="editProfileBtn" class="btn btn-secondary">Edit Profile</button>
                     <button type="button" id="saveChangesBtn" class="btn btn-primary" style="display: none;">Save Changes</button>
                     <button type="button" id="cancelBtn" class="btn btn-danger" style="display: none;">Cancel</button>
@@ -107,7 +109,8 @@
     </section>
 </div>
 <script>
-
+    //added toggle functionality for menu items -faith
+    //please lets reuse for other templates for responsiveness
     const menuToggle = document.querySelector('.menu-toggle');
     const menuClose = document.querySelector('.menu-close');
     const menuItems = document.querySelector('.items');
@@ -123,7 +126,8 @@
         menuToggle.style.display = 'block';
         menuClose.style.display = 'none';
     });
-
+//when user clicks on password eye icon,it hides and unhides their text 
+// fixed issues (faith)
  const btn = document.querySelector("#togglePassword");
 const passwordEl = document.querySelector("#password");
 
@@ -177,7 +181,7 @@ const formFields = document.querySelectorAll("#username, #email,#password, #oldP
 let initialFormValues = {};
 
 
-
+//buttons functionality for editing the users profile to be worked on 
 editProfileBtn.addEventListener("click", () => {
     formFields.forEach(field => {
         field.disabled = false;
@@ -197,8 +201,7 @@ saveChangesBtn.addEventListener("click", () => {
     const newPassword = document.querySelector("#newPassword").value;
     const confirmPassword = document.querySelector("#confirmPassword").value;
 
-    // Perform the save changes logic here
-    // For example, you can send the data to the server using fetch or XMLHttpRequest
+    // nada please add save changes js here for user profile
 
     console.log("Profile updated with:", { username, email, oldPassword, newPassword, confirmPassword });
     alert("Profile updated successfully!");
@@ -223,7 +226,7 @@ cancelBtn.addEventListener("click", () => {
     cancelBtn.style.display = "none";
 });
 
-// Initially disable form fields
+//  for the ui please add the functionality to disable the fields 
 formFields.forEach(field => field.disabled = true);
 
  togglePassword.addEventListener("click", () => {

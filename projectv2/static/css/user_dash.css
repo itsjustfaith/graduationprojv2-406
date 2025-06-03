@@ -837,7 +837,7 @@ tr{
 @media (max-width: 1025px){
    td:not(:first-of-type)
    {
-    min-width: 12.1rem;
+    min-width: 15rem;
    }
     table {
     width: max-content; /* Prevents table shrink */
