@@ -1,7 +1,6 @@
 import os
-# Completely suppress FFmpeg logging
-os.environ['OPENCV_FFMPEG_LOGLEVEL'] = '8'  # Only fatal errors
-os.environ['GST_DEBUG'] = '0'  # Suppress GStreamer logs
+os.environ['OPENCV_FFMPEG_LOGLEVEL'] = '8'  
+os.environ['GST_DEBUG'] = '0' 
 
 from flask import Flask, render_template, Response, redirect, url_for, request, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -9,11 +8,11 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from flask_migrate import Migrate
-from ultralytics import YOLO  # Import YOLOv8
+from ultralytics import YOLO  # for our denco system , import  YOLOv8
 import base64
 import re
 import torch 
-import torch.backends.cudnn as cudnn  # For CUDA optimization
+import torch.backends.cudnn as cudnn  
 import warnings
 from contextlib import redirect_stderr, nullcontext
 import io
@@ -26,24 +25,22 @@ import cv2
 import os
 import numpy as np
 
-# Initialize Flask app and configurations
 app = Flask(__name__)
 socketio = SocketIO(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'  # SQLite database file
 app.config['SECRET_KEY'] = 'mysecretkey'  # Secret key for Flask session management
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Disable modification tracking
 
-# Initialize SQLAlchemy
+#initalized db using SQLAlchemy -James
 db = SQLAlchemy(app)
 
-# Initialize Flask-Migrate
 migrate = Migrate(app, db)
 
-# Initialize Flask-Login
+# this is the part for starting Flask-Login - Kelsy
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'  # Set the login view for Flask-Login
 
-# Define the User model
+# placing the User models 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
@@ -54,7 +51,7 @@ class User(db.Model, UserMixin):
     def __repr__(self):
         return f'<User {self.email}>'
 
-# Define DetectionLog model
+# setting up DetectionLog model -James
 class DetectionLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.String(20), nullable=False)
@@ -72,16 +69,13 @@ def reset_auto_increment():
     db.session.execute('DELETE FROM sqlite_sequence WHERE name="user";')
     db.session.commit()
 
-# Load user function for Flask-Login
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, int(user_id))  # Updated to use session.get()
 
-# Admin login check
 def is_admin(user):
     return user.is_authenticated and user.is_admin
 
-#Landing Page route
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -100,7 +94,7 @@ def login_signup():
 
         user = User.query.filter_by(email=email).first()
 
-        if confirm_password:  # Signup logic
+        if confirm_password:  # Signup methods , please check thru it 
             if user:
                 flash('Email already exists! Please log in.', 'signup_error')
                 return redirect(url_for('login_signup', form='signup'))
@@ -109,7 +103,7 @@ def login_signup():
                 return redirect(url_for('login_signup', form='signup'))
             else:
                 is_admin = False
-                if User.query.count() == 0:  # First user becomes admin
+                if User.query.count() == 0:  # Note for frontend: Made first user admin, i have the admin creds -James
                     is_admin = True
                 
                 hashed_password = generate_password_hash(password)
@@ -127,7 +121,7 @@ def login_signup():
                     session['admin_logged_in'] = True
                     session['admin_username'] = new_user.username
                     flash('Admin account created successfully!', 'signup_success')
-                    return redirect(url_for('admin'))  # Redirect to admin dashboard
+                    return redirect(url_for('admin'))  # kelsy please check here for making sure it works well
                 
                 flash('Account created successfully! Please Sign in.', 'signup_success')
                 return redirect(url_for('login_signup', form='signup'))
@@ -138,7 +132,7 @@ def login_signup():
                 if user.is_admin:
                     session['admin_logged_in'] = True
                     session['admin_username'] = user.username
-                    return redirect(url_for('admin'))  # Explicit admin redirect
+                    return redirect(url_for('admin'))  
                 return redirect(url_for('user_dash'))
             else:
                 flash('Wrong Email or Password!', 'login_error')
@@ -226,23 +220,20 @@ def api_user(user_id):
     if request.method == 'PUT':
         data = request.get_json()
         
-        # Check if username is being changed and validate
         if 'username' in data and data['username'] != user.username:
             if User.query.filter(User.username == data['username']).first():
                 return jsonify({'error': 'Username already exists'}), 400
             user.username = data['username']
         
-        # Check if email is being changed and validate
         if 'email' in data and data['email'] != user.email:
             if User.query.filter(User.email == data['email']).first():
                 return jsonify({'error': 'Email already exists'}), 400
             user.email = data['email']
         
-        # Update password if provided
         if 'password' in data and data['password']:
             user.password = generate_password_hash(data['password'])
         
-        # Update admin status
+        # James add admin functionalities so that admin status can change below here
         if 'is_admin' in data:
             user.is_admin = data['is_admin']
             
@@ -324,7 +315,7 @@ app.config['AUDIO_FOLDER'] = AUDIO_FOLDER #For Audio
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
-if not os.path.exists(AUDIO_FOLDER):  #For Audio
+if not os.path.exists(AUDIO_FOLDER):  #For the alert sound
     os.makedirs(AUDIO_FOLDER)
 
 # Global variables for people count and control signals
@@ -347,7 +338,7 @@ def initialize_yolo():
             raise FileNotFoundError(f"Model file not found at {model_path}")
             
         model = YOLO(model_path)
-        model.fuse()  # Optimize model
+        model.fuse()  
         return model
         
     except Exception as e:
@@ -356,7 +347,7 @@ def initialize_yolo():
     
 heatmap_data = []
 
-# I Modified detect_people function to store coordinates
+# I have modified detect_people function to store coordinates - James
 def detect_people(frame, model):
     global people_count, heatmap_data
     try:
@@ -374,7 +365,7 @@ def detect_people(frame, model):
             for box in boxes:
                 cls_id = box.cls.item() if hasattr(box.cls, 'item') else int(box.cls)
                 conf = box.conf.item() if hasattr(box.conf, 'item') else float(box.conf)
-                if cls_id == 0 and conf > 0.4:  # Class 0 is person
+                if cls_id == 0 and conf > 0.4:  
                     x1, y1, x2, y2 = box.xyxy[0].astype(int)
                     bounding_boxes.append([x1, y1, x2-x1, y2-y1])
                     confidences.append(conf)
@@ -414,13 +405,13 @@ def get_heatmap_data():
         return jsonify(all_points)
     except Exception as e:
         app.logger.error(f"Error in heatmap_data: {str(e)}")
-        return jsonify([]), 200  # Return empty array instead of error
+        return jsonify([]), 200  
 
 # Generate video frames with detection
 def generate_frames(video_source=None):
     global stop_feed, max_people_count
     
-    # Use a more robust temporary file handling
+    # Lets use a more robust way to temporary file handling - Kelsy
     import tempfile
     import sys
     from contextlib import contextmanager
@@ -436,9 +427,9 @@ def generate_frames(video_source=None):
             sys.stderr = original_stderr
             try:
                 if os.path.exists(f.name):
-                    os.unlink(f.name)  # More reliable than remove on Windows
+                    os.unlink(f.name)  
             except:
-                pass  # Ignore any cleanup errors
+                pass  
 
     with suppress_stderr():
         model = initialize_yolo()
@@ -484,7 +475,6 @@ def generate_frames(video_source=None):
                     yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
                     
             except GeneratorExit:
-                # Handle graceful shutdown when client disconnects
                 pass
                 
             finally:
@@ -629,7 +619,7 @@ def display_video():
         is_static=True
     )
 
-# User Dashboard route
+# frontend devs please change template name accordingly - James
 @app.route('/user_dash')
 @login_required
 def user_dash():
@@ -682,7 +672,7 @@ def user_profile():
     
     return render_template('user_profile.html', user=current_user)
 
-# Detection route
+# Detection 
 @app.route('/detect', methods=['GET', 'POST'])
 @login_required
 def detect():
@@ -744,7 +734,7 @@ def stop_feed_func():
     socketio.emit('feed_stopped')
 
     import time
-    time.sleep(0.5)  # Allow 500ms for cleanup
+    time.sleep(0.5)  # This should allow 500ms for cleanup , instead of 700 - Kelsy
 
     used_resource = session.get('used_resource', 'Live Feed')
     if used_resource == 'live':
@@ -765,21 +755,21 @@ def stop_feed_func():
     max_people_count = 0
     return redirect(url_for('user_dash'))
 
-# Background task for people count
+# behind the scenes for people counting
 def background_people_count():
     global stop_feed
     while not stop_feed:
         socketio.emit('people_count', {'count': people_count })
         socketio.sleep(1)
 
-# User count route
+# User count 
 @app.route('/user_count')
 @login_required
 def user_count():
     logs = DetectionLog.query.filter_by(user_id=current_user.id).all()
     return render_template('user_count.html', logs=logs)
 
-# Delete log route
+# Deletion of  log 
 @app.route('/delete_log/<int:log_id>')
 @login_required
 def delete_log(log_id):
@@ -812,7 +802,6 @@ def ensure_admin_exists():
 
 # Initialize database
 if __name__ == '__main__':
-    # Suppress all warnings
     import warnings
     warnings.filterwarnings("ignore")
 
