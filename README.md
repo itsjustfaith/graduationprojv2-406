@@ -1,5 +1,5 @@
 # graduationprojv2-406
 
 
-Please note that the final work is in the finalcombinedV2 branch
-Kindly select Branch  , click All , select finalcombinedV2
+Please note that the upgraded graduation project work is in the denco-upgrade branch
+Kindly direct to denco-upgrade branch above
