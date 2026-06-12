@@ -28,7 +28,8 @@ import numpy as np
 app = Flask(__name__)
 socketio = SocketIO(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'  # SQLite database file
-app.config['SECRET_KEY'] = 'mysecretkey'  # Secret key for Flask session management
+# Load secret key from environment for safety. In dev, fallback to a non-production value.
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret')  # Do NOT use 'dev-secret' in production
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Disable modification tracking
 
 #initalized db using SQLAlchemy -James
@@ -791,10 +792,12 @@ def delete_log(log_id):
 def ensure_admin_exists():
     with app.app_context():
         if User.query.count() == 0:  # If no users exist
+            # Default admin password can be provided via env var `DEFAULT_ADMIN_PASSWORD`.
+            default_admin_password = os.environ.get('DEFAULT_ADMIN_PASSWORD', 'admin123')
             admin = User(
                 username='admin',
                 email='admin@example.com',
-                password=generate_password_hash('admin123'),
+                password=generate_password_hash(default_admin_password),
                 is_admin=True
             )
             db.session.add(admin)

@@ -34,11 +34,21 @@ python app2.py
 
 - The app starts on http://0.0.0.0:5000 — open http://localhost:5000 in your browser.
 
-- **Model file:** `yolov8n.pt` should be placed in `denco/` (it is included in the repo). If you want a different YOLOv8 model, replace that filename and ensure `app2.py` references it.
+  **Model file:** The YOLO model binary is intentionally NOT included in the repo (large file). Download `yolov8n.pt` and place it in `denco/` or set the `MODEL_PATH` environment variable to the model location. Example download sources: the Ultralytics releases or your preferred model provider.
 
-- **Database:** The app uses SQLite (`db.sqlite`) and will auto-create tables on first run. A default admin user is created automatically with email `admin@example.com` and password `admin123` if no users exist.
+  **Database & migrations:** The app uses SQLite (`db.sqlite`) and will auto-create tables on first run. Remove any committed `instance/db.sqlite` before publishing. Use Flask-Migrate to manage schema changes:
 
-- **Notes / Troubleshooting:**
-  - If YOLO initialization fails, confirm `yolov8n.pt` exists and that `ultralytics` and `torch` are compatible with your Python and CUDA versions.
-  - For camera/live feed: the app tries local camera indices `1` then `0` by default. For IP cameras provide an RTSP URL (format shown in the web UI) when selecting `ip_camera`.
-  - If using a GPU, install a matching `torch` build (see https://pytorch.org) before installing the other requirements.
+```bash
+cd denco
+flask db init   # only if migrations not initialized
+flask db migrate -m "Init"
+flask db upgrade
+```
+
+By default a local admin user will be created if no users exist. Set `DEFAULT_ADMIN_PASSWORD` in your environment (or `.env`) to customize the initial password.
+
+- If YOLO initialization fails, confirm `yolov8n.pt` exists and that `ultralytics` and `torch` are compatible with your Python and CUDA versions.
+- If YOLO initialization fails, confirm `yolov8n.pt` exists at the path set by `MODEL_PATH` or in `denco/`, and that `ultralytics` and `torch` are compatible with your Python and CUDA versions.
+- Security: Set `SECRET_KEY` in your environment (see `.env.example`). Do not commit secrets into the repo.
+- For camera/live feed: the app tries local camera indices `1` then `0` by default. For IP cameras provide an RTSP URL (format shown in the web UI) when selecting `ip_camera`.
+- If using a GPU, install a matching `torch` build (see https://pytorch.org) before installing the other requirements.

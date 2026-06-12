@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Instance / SQLite
+instance/
+**/instance/
+db.sqlite
+*.sqlite
+
+# Editor directories
+.vscode/
+
+# Environment files
+.env
+.env.*
+
+# Byte-compiled / distribution
+build/
+dist/
+*.egg-info/
+
+# PyTorch / model files
+*.pt
+*.pth
+
+# OS files
+Thumbs.db
+.DS_Store
