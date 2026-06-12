@@ -334,7 +334,7 @@ def initialize_yolo():
             torch.set_flush_denormal(True)
         
         # Load model with error handling
-        model_path = "yolov8n.pt"
+        model_path = os.environ.get('MODEL_PATH', 'yolov8n.pt')
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"Model file not found at {model_path}")
             
